@@ -1,0 +1,10 @@
+name = "bsdfs"
+version = "0.1.0"
+defaultTargets = ["bsdfs", "Bsdfs"]
+
+[[lean_lib]]
+name = "Bsdfs"
+
+[[lean_exe]]
+name = "bsdfs"
+root = "Main"
