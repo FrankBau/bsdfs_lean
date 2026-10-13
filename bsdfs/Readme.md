@@ -80,3 +80,43 @@ Nothing pending from the plan. Possible follow-ups: interval 2 of Γ_c and the r
 - No expensive tests or long runs without asking first; small smoke tests and tool installs are fine.
 - Code in natural line width, no forced line breaks (especially print statements).
 - Mark conjectures and unverified claims explicitly; correct logical conclusions matter more than speed.
+
+## Paper results and their Lean names
+Most results of the paper are in the code under a short Lean name; the paper's name, and usually its label (e.g. `lem:period-seal`), is in the docstring, so a search for it finds them. Some results have no counterpart because the formal proof takes another route (see below the table).
+
+| Paper (bsdfs.tex, edge_budget.tex, gate_family.tex) | Lean name (file) |
+|---|---|
+| Soundness | `bsdfs_sound` (Sound) |
+| Barrier Distance Bound | `EC.walk_bound` (Paths) |
+| Pruning is Permissive | `pruning_permissive` (Paths) |
+| Fruitful Return | `SearchPost.fruitful_return` (Complete) |
+| Strict Barrier Invariant | `LoopInv.strict` (Complete) |
+| Call Completeness, Search Preserves, Fruitless Monotonicity | clauses `complete`, `ec`, `fruitless` of `SearchPost`, proved in `search_spec` (Complete) |
+| Update Repairs, Fruitful Distance Lower Bound | `CascPost` (`repair`, `mon`) from `fruitful_spec` (Cascade) |
+| Per-Call Global Monotonicity | `SearchPost.mono_all` (RunSearch), field `mono` of `RunFacts` |
+| Completeness | `bsdfs_complete_once` (Complete) |
+| Descent Stack | built into the phase definition `Shape` (m, β) (DelayFacts) |
+| Ascent Purity | `asc_pure` (Phases) |
+| Call–Phase Correspondence | `desc_call` (Phases), part (1) only |
+| Descent Origins | `desc_origin` (Phases) |
+| Cascade Witness Path | field `witness` of `RunFacts` |
+| Descent Seal | `seal_enter`, built on `seal_core` (Phases) |
+| One Entry per Pair per Phase | `one_entry'` (Phases) |
+| Drop Depth | `drop_depth` (DelayFacts) |
+| Descent Split (called Depth Split in changes_v3.md) | `descent_split` (DelayFacts) |
+| Interval Budget (per node, per edge) | `node_budget`, `edge_budget`, with parts (i) and (ii) as `obs_i` and `obs_ii` (DelayFacts) |
+| Worst-Case Delay | `bsdfs_worst_case_delay` (WorstCase), via `interval_bound` (DelaySum) |
+| Period Split | `period_split` (Amortized) |
+| Period Budget (per node, per edge) | `node_period`, `edge_period` (Amortized) |
+| Amortized Delay | `bsdfs_amortized_delay` (Amortized) |
+| Clique Traps | `clique_run` (Clique), `clique_lower` and `clique_amortized_lower` (Tightness) |
+| Sweep (gate_family.tex) | `sweep_spec` (Sweep) |
+| Interval 1 of the gate trap Γ_c | `gate_interval1` (Gate), via `gate_run` (GateRun) |
+| Tightness of the delay bounds | `gate_worst_case_lower`, `worst_case_ratio`, `gate_amortized_lower`, `amortized_ratio` (Tightness) |
+
+Paper results with no Lean counterpart:
+- Two Entries per Pair, Entry Bound: replaced by the v3 budgets per node and per edge (Interval Budget, Period Budget).
+- Triangle Inequality, Cascade Distance: distances are walks (`WalkLE`), not numbers, and the cascade gives Update Repairs without exact distances.
+- Barrier non-negative, Barrier Upper Bound, Raise Bound, Drop Bound, Fruitful Writes Never Lower: clauses of `SearchPost`, or fields `raise`, `drop`, `fruitful` of `RunFacts` and `DelayFacts`, proved from the program. Boundary Intervals: covered by the general interval bound. Termination: `termination_by` of `search`.
+- Drop Count: probably `U_le` (DelayFacts); this correspondence is not checked.
+- Cycle Reduction: cycle mode is not formalized.
