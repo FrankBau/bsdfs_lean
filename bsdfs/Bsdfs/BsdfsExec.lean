@@ -18,7 +18,7 @@ structure Graph (n : Nat) where
   succ : Fin n → List (Fin n)
   pred : Fin n → List (Fin n)
 
-/-- simple digraph, `pred` is exactly the reverse of `succ` -/
+/-- well-formed digraph: no duplicate edges (self-loops are harmless), `pred` is exactly the reverse of `succ` -/
 structure Graph.WF {n : Nat} (G : Graph n) : Prop where
   succ_nodup : ∀ u, (G.succ u).Nodup
   pred_nodup : ∀ v, (G.pred v).Nodup

@@ -19,6 +19,30 @@ def Trace.isCasc (tr : List (Ev n)) (q : Nat) : Bool := match tr[q]? with
   | some (.write _ _ _ _ .fruitful) => true
   | _ => false
 
+theorem Trace.not_isCasc_of_obs {tr : List (Ev n)} {q : Nat} (h : isObs tr q = true) : isCasc tr q = false := by
+  unfold isObs at h; unfold isCasc
+  cases hq : tr[q]? with
+  | none => simp [hq] at h
+  | some e => cases e with
+    | write σ x o nw kd => cases kd <;> simp [hq, Ev.obs] at h ⊢
+    | _ => simp [hq, Ev.obs] at h ⊢
+
+theorem Trace.isCasc_of_drop {tr : List (Ev n)} {q : Nat} {y : Fin n} (h : dropAt tr y q = true) : isCasc tr q = true := by
+  obtain ⟨σ, o, nw, he⟩ := Trace.dropAt_iff.mp h; simp [isCasc, he]
+
+theorem Trace.isCasc_of_deq {tr : List (Ev n)} {q : Nat} {y : Fin n} (h : deqAt tr y q = true) : isCasc tr q = true := by
+  obtain ⟨σ, d, he⟩ := Trace.deqAt_iff.mp h; simp [isCasc, he]
+
+theorem Trace.not_isCasc_of_enter {tr : List (Ev n)} {q σ : Nat} {u : Fin n} {hh : Nat} (he : tr[q]? = some (.enter σ u hh)) : isCasc tr q = false := by simp [isCasc, he]
+
+theorem Trace.not_isCasc_of_exit {tr : List (Ev n)} {q σ : Nat} {v : Fin n} {h sd : Nat} {f : Bool} (he : tr[q]? = some (.exit σ v h sd f)) : isCasc tr q = false := by simp [isCasc, he]
+
+theorem Trace.not_isCasc_of_output {tr : List (Ev n)} {q σ : Nat} {P : List (Fin n)} (he : tr[q]? = some (.output σ P)) : isCasc tr q = false := by simp [isCasc, he]
+
+theorem Trace.not_isCasc_of_raise {tr : List (Ev n)} {q σ : Nat} {x : Fin n} {o nw : Nat} (he : tr[q]? = some (.write σ x o nw .raise)) : isCasc tr q = false := by simp [isCasc, he]
+
+theorem Trace.isObs_of_output {tr : List (Ev n)} {q σ : Nat} {P : List (Fin n)} (he : tr[q]? = some (.output σ P)) : isObs tr q = true := by simp [isObs, he, Ev.obs]
+
 /-- facts about single events and single frames of the run -/
 structure RunFacts (G : Graph n) (s t : Fin n) (k : Nat) (tr : List (Ev n)) : Prop where
   /-- an entry at depth h = |S|, of a node off the stack and ≠ t, under the pruning guard, extending the stack path; depth 0 only for the initial call -/
@@ -159,14 +183,6 @@ theorem Trace.Frame.eq_of_node {e₁ x₁ e₂ x₂ q σ₁ σ₂ h₁ h₂ : Na
 
 end helpers
 
-theorem Graph.Edges.of_append_left {G : Graph n} {A B : List (Fin n)} (h : G.Edges (A ++ B)) : G.Edges A := by
-  induction A with
-  | nil => trivial
-  | cons a A ih =>
-    cases A with
-    | nil => trivial
-    | cons a' A => exact ⟨h.1, ih h.2⟩
-
 /-- Descent Seal's path: a stack path P ++ M from s ending in x, followed by a walk from x to t that avoids X ⊇ P, contains a
     bounded s-t path that extends P ++ M.take 1 -/
 theorem Graph.bounded_of_stack_walk {G : Graph n} {k : Nat} {s t x : Fin n} {P M X : List (Fin n)} {d : Nat} (hPX : ∀ z ∈ P, z ∈ X) (hhead : (P ++ M).head? = some s) (hE : G.Edges (P ++ M)) (hnd : (P ++ M).Nodup) (hM : M.getLast? = some x) (hW : G.WalkLE X t x d) (hlen : (P ++ M).length + d ≤ k + 1) : ∃ R, G.BoundedPath k s t R ∧ (P ++ M.take 1) <+: R := by
@@ -235,39 +251,6 @@ include hR
 theorem stk_nodup (q : Nat) : (stk tr q).Nodup :=
   Trace.stk_nodup (fun p σ v hh he => (hR.enter p σ v hh he).2.1) q
 
-omit hR in
-theorem isCasc_of_obs {q : Nat} (h : isObs tr q = true) : isCasc tr q = false := by
-  unfold isObs at h; unfold isCasc
-  cases hq : tr[q]? with
-  | none => simp [hq] at h
-  | some e => cases e with
-    | write σ x o nw kd => cases kd <;> simp [hq, Ev.obs] at h ⊢
-    | _ => simp [hq, Ev.obs] at h ⊢
-
-omit hR in
-theorem isCasc_of_drop {q : Nat} {y : Fin n} (h : dropAt tr y q = true) : isCasc tr q = true := by
-  obtain ⟨σ, o, nw, he⟩ := Trace.dropAt_iff.mp h; simp [isCasc, he]
-
-omit hR in
-theorem isCasc_of_deq {q : Nat} {y : Fin n} (h : deqAt tr y q = true) : isCasc tr q = true := by
-  obtain ⟨σ, d, he⟩ := Trace.deqAt_iff.mp h; simp [isCasc, he]
-
-omit hR in
-theorem isCasc_of_fruit {q : Nat} {y : Fin n} (h : fruitAt tr y q = true) : isCasc tr q = true := by
-  obtain ⟨σ, o, nw, he⟩ := Trace.fruitAt_iff.mp h; simp [isCasc, he]
-
-omit hR in
-theorem not_isCasc_of_exit {q σ : Nat} {v : Fin n} {h sd : Nat} {f : Bool} (he : tr[q]? = some (.exit σ v h sd f)) : isCasc tr q = false := by
-  simp [isCasc, he]
-
-omit hR in
-theorem not_isCasc_of_output {q σ : Nat} {P : List (Fin n)} (he : tr[q]? = some (.output σ P)) : isCasc tr q = false := by
-  simp [isCasc, he]
-
-omit hR in
-theorem isObs_of_output {q σ : Nat} {P : List (Fin n)} (he : tr[q]? = some (.output σ P)) : isObs tr q = true := by
-  simp [isObs, he, Ev.obs]
-
 /-- the frame of a cascade event is open at a, when no output lies between a and the cascade -/
 theorem casc_open {a q : Nat} (hq : isCasc tr q = true) (hno : ∀ r, a < r → r < q → isObs tr r = false) : ∃ e x σ v h sd, Frame tr e x ∧ e < q ∧ q < x ∧ (stk tr (e + 1)).length = (stk tr q).length ∧ tr[x]? = some (.exit σ v h sd true) ∧ (∀ r, q ≤ r → r < x → isCasc tr r = true) ∧ e < a := by
   obtain ⟨e, x, σ, v, h, sd, hfr, heq, hqx, hlen, hex, hall⟩ := hR.casc q hq
@@ -294,7 +277,7 @@ theorem asc_pure {q : Nat} (h1 : β < q) (h2 : q ≤ c) (hq : isCasc tr q = true
     rcases Nat.eq_or_lt_of_le hle with hxc | hxc
     · subst hxc; have := hC.obs_c; simp [isObs, hex, Ev.obs] at this
     · have := hall c (by omega) hxc
-      rw [isCasc_of_obs hC.obs_c] at this; cases this
+      rw [not_isCasc_of_obs hC.obs_c] at this; cases this
   have hsz := hfr.2.2.2.1
   have hmin := hS.min (x + 1) (by have := hS.le; omega) (by omega)
   have hopen := hfr.isOpen (q := β + 1) (by have := hS.le; omega) (by omega)
@@ -358,7 +341,7 @@ theorem origin_once {q₁ q₂ : Nat} {z : Fin n} (h1 : a < q₁) (h2 : q₂ ≤
 theorem deq_count' (z : Fin n) : cnt (fun q => deqAt tr z q = true) a β ≤ cnt (fun q => dropAt tr z q = true) a β + (if anyIn (fruitAt tr z) a β then 1 else 0) := by
   have hcasc_a : ∀ q q', q' ≤ a → a ≤ q → ¬ ∀ r, q' ≤ r → r ≤ q → isCasc tr r = true := fun q q' h1 h2 hall => by
     have := hall a h1 h2
-    rw [isCasc_of_obs hC.obs_a] at this; cases this
+    rw [not_isCasc_of_obs hC.obs_a] at this; cases this
   have hsplit : cnt (fun q => deqAt tr z q = true) a β ≤ cnt (fun q => deqAt tr z q = true ∧ (stk tr q).getLast? = some z) a β + cnt (fun q => deqAt tr z q = true ∧ ¬ (stk tr q).getLast? = some z) a β :=
     Trace.cnt_le_split _ _ a β
   have hno : cnt (fun q => deqAt tr z q = true ∧ ¬ (stk tr q).getLast? = some z) a β ≤ cnt (fun q => dropAt tr z q = true) a β := by

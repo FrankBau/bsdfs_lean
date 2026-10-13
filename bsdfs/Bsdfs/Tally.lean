@@ -1,5 +1,4 @@
-import Bsdfs.BsdfsExec
-import Std.Tactic.Do
+import Bsdfs.Basic
 
 /-!
   Attribution of Work (sec:work-attribution) for the step counter: charge every call its entry and all its successor scans at
@@ -184,23 +183,12 @@ termination_by k - h
 
 /-- the whole run keeps `StampOK` -/
 theorem bsdfs_stamps (G : Graph n) (s t : Fin n) (k : Nat) : G.StampOK (bsdfs G s t k) := by
-  have hroot := search_cost G t k 0 s #[] 0 0
-  unfold bsdfs
-  dsimp only
-  generalize hx : StateT.run _ _ = x
-  refine StateM.of_wp_run_eq hx (fun x => G.StampOK x.2.trace.toList) ?_
-  mvcgen [M.tick, M.emit, M.steps, hroot]
-  case vc1.pre =>
-    -- after the start event: stamp 0, cost 0
-    have hok : G.StampOK ([] ++ [Ev.start 0]) := Graph.StampOK.nil.snoc (by intro σ hσ; simp at hσ; subst hσ; simp)
-    simp +zetaDelta only
-    refine ⟨by simp, by simp, by simp, by simp, Nat.zero_le k, by simp, by simp, by simpa using hok⟩
-  case vc2.post.success =>
-    -- the term event: stamp = steps = cost
-    obtain ⟨-, hc, hok⟩ := ‹_ = #[] ∧ _ ∧ G.StampOK _›
-    simp +zetaDelta only
-    simp only [Array.toList_push]
-    exact hok.snoc (by intro σ hσ; simp at hσ; subst hσ; simp [Graph.owed]; omega)
+  -- after the start event: stamp 0, cost 0; at the term event: stamp = steps = cost
+  refine bsdfs_of_root (fun st => st.S = #[] ∧ st.steps = 0 ∧ G.cost st.trace.toList = 0 ∧ (#[] : Array (Fin n)).size = 0 ∧ 0 ≤ k ∧ 0 ≤ 0 ∧ 0 ≤ 0 + G.outSum (#[] : Array (Fin n)).toList ∧ G.StampOK st.trace.toList) G.StampOK
+    ⟨rfl, rfl, by simp, rfl, Nat.zero_le k, Nat.le_refl 0, Nat.zero_le _, Graph.StampOK.nil.snoc (by intro σ hσ; simp at hσ; subst hσ; simp)⟩ ?_
+  refine (StateM.triple_iff _ _ _).mpr fun st hpre => ?_
+  obtain ⟨-, hc, hok⟩ := (StateM.triple_iff _ _ _).mp (search_cost G t k 0 s #[] 0 0) st hpre
+  exact hok.snoc (by intro σ hσ; simp at hσ; subst hσ; simp [Graph.owed]; omega)
 
 /-- the tally: between any two observable events of the run, the steps are at most the cost of the events in between plus the
     scans owed at the first one -/

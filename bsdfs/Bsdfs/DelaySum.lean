@@ -19,6 +19,8 @@ def lsum (L : List α) (f : α → Nat) : Nat := (L.map f).sum
 @[simp] theorem lsum_nil (f : α → Nat) : lsum [] f = 0 := rfl
 @[simp] theorem lsum_cons (a : α) (L : List α) (f : α → Nat) : lsum (a :: L) f = f a + lsum L f := by simp [lsum]
 
+theorem lsum_append (L M : List α) (f : α → Nat) : lsum (L ++ M) f = lsum L f + lsum M f := by simp [lsum]
+
 theorem lsum_add (L : List α) (f g : α → Nat) : lsum L (fun a => f a + g a) = lsum L f + lsum L g := by
   induction L with
   | nil => rfl

@@ -55,6 +55,24 @@ theorem Graph.Edges.of_append_right {G : Graph n} {A B : List (Fin n)} (h : G.Ed
       | cons b B => exact h.2
     | cons a' A => exact h.2
 
+theorem Graph.Edges.of_append_left {G : Graph n} {A B : List (Fin n)} (h : G.Edges (A ++ B)) : G.Edges A := by
+  induction A with
+  | nil => trivial
+  | cons a A ih =>
+    cases A with
+    | nil => trivial
+    | cons a' A => exact ⟨h.1, ih h.2⟩
+
+theorem Graph.Edges.append_cons {G : Graph n} {A B : List (Fin n)} {v : Fin n} (hA : G.Edges (A ++ [v])) (hB : G.Edges (v :: B)) : G.Edges (A ++ v :: B) := by
+  induction A with
+  | nil => simpa using hB
+  | cons a A ih =>
+    cases A with
+    | nil => exact ⟨hA.1, hB⟩
+    | cons a' A => exact ⟨hA.1, ih hA.2⟩
+
+theorem Graph.edges_of_stack {G : Graph n} {s t : Fin n} {L : List (Fin n)} (h : StackPath G s t L) : G.Edges L := (Graph.edges_iff_zip G L).mpr h.2.2.2
+
 /-- a list path gives a walk -/
 theorem Graph.walk_of_list {G : Graph n} {X : List (Fin n)} {t : Fin n} : ∀ (R : List (Fin n)) (y : Fin n), R.head? = some y → R.getLast? = some t → G.Edges R → (∀ z ∈ R.tail, z ∉ X) → G.Walk X t y (R.length - 1)
   | [], _, h, _, _, _ => by simp at h
@@ -126,6 +144,26 @@ theorem eq_of_prefix_snoc {α : Type} {L p : List α} {a c : α} (ha : (L ++ [a]
   simp at h1 h2
   exact h1.trans h2.symm
 
+theorem eq_of_prefix_pair {α : Type} {L p : List α} {v a c : α} (ha : (L ++ [v, a]) <+: p) (hc : (L ++ [v, c]) <+: p) : a = c := by
+  have e1 : L ++ [v, a] = (L ++ [v]) ++ [a] := by simp
+  have e2 : L ++ [v, c] = (L ++ [v]) ++ [c] := by simp
+  rw [e1] at ha; rw [e2] at hc
+  exact eq_of_prefix_snoc ha hc
+
+theorem prefix_pair_length {α : Type} {L p : List α} {v w : α} (h : (L ++ [v, w]) <+: p) : L.length + 2 ≤ p.length := by
+  have := h.length_le; simpa using this
+
+theorem prefix_of_pair {α : Type} {L p : List α} {v w : α} (h : (L ++ [v, w]) <+: p) : (L ++ [v]) <+: p :=
+  List.IsPrefix.trans ⟨[w], by simp⟩ h
+
+theorem head_append_cons {α : Type} {L R : List α} {v : α} : (L ++ v :: R).head? = (L ++ [v]).head? := by
+  cases L <;> simp
+
+theorem prefix_of_head {α : Type} {s : α} {p : List α} (h : p.head? = some s) : [s] <+: p := by
+  cases p with
+  | nil => simp at h
+  | cons a p => simp at h; subst h; exact ⟨p, rfl⟩
+
 theorem nodup_length_le (l : List (Fin n)) (h : l.Nodup) : l.length ≤ n := by
   have := h.length_le_of_subset (l₂ := List.finRange n) (fun x _ => List.mem_finRange x)
   simpa using this
@@ -163,21 +201,27 @@ theorem Graph.BoundedPath.not_prefix_of_mem {G : Graph n} {k : Nat} {s t v w : F
   rw [List.nodup_append] at this
   exact this.2.2 w hw w (by simp) rfl
 
+/-- the suffix of a bounded path from the last node of a prefix is a walk avoiding the prefix -/
+theorem Graph.BoundedPath.suffix_walk {G : Graph n} {k : Nat} {s t v : Fin n} {L p : List (Fin n)} (hp : G.BoundedPath k s t p) (hpre : (L ++ [v]) <+: p) : G.Walk (L ++ [v]) t v (p.length - L.length - 1) := by
+  obtain ⟨R, rfl⟩ := hpre
+  obtain ⟨-, hlast, hnd, -, hedge⟩ := hp
+  rw [← Graph.edges_iff_zip] at hedge
+  have hnd' : (L ++ [v] ++ R).Nodup := by simpa using hnd
+  have hw := Graph.walk_of_list (G := G) (X := L ++ [v]) (t := t) (v :: R) v rfl ?_ (Graph.Edges.of_append_right (A := L) (by simpa using hedge)) ?_
+  · simpa using hw
+  · rw [List.append_assoc, List.getLast?_append] at hlast
+    cases h : (v :: R).getLast? with
+    | none => simp at h
+    | some a => simp only [List.singleton_append] at hlast; rw [h] at hlast; simpa using hlast
+  · intro z hz hzL
+    simp only [List.tail_cons] at hz
+    exact (List.nodup_append.mp hnd').2.2 z hzL z hz rfl
+
 /-- Pruning is Permissive (lem:pruning-is-permissive) -/
 theorem pruning_permissive {G : Graph n} {k : Nat} {s t v w : Fin n} {L p : List (Fin n)} {b : Vector Nat n} (hEC : EC G b (L ++ [v])) (hbt : b[t] = 0) (hp : G.BoundedPath k s t p) (hpre : (L ++ [v, w]) <+: p) : b[w] + L.length < k := by
-  obtain ⟨R, rfl⟩ := hpre
-  obtain ⟨-, hlast, hnd, hlen, hedge⟩ := hp
-  rw [← Graph.edges_iff_zip] at hedge
-  have hwalk : G.Walk (L ++ [v]) t w (R.length) := by
-    have := Graph.walk_of_list (G := G) (X := L ++ [v]) (t := t) (w :: R) w rfl (by simpa using hlast) (Graph.Edges.of_append_right (A := L ++ [v]) (by simpa using hedge)) ?_
-    · simpa using this
-    · intro z hz
-      simp only [List.tail_cons] at hz
-      have := (List.nodup_append.mp (by simpa using hnd : (L ++ [v] ++ (w :: R)).Nodup)).2.2
-      exact fun hz' => this z hz' z (by simp [hz]) rfl
-  have hwX : w ∉ L ++ [v] := by
-    have := (List.nodup_append.mp (by simpa using hnd : (L ++ [v] ++ (w :: R)).Nodup)).2.2
-    exact fun hw => this w hw w (by simp) rfl
-  have := hEC.walk_bound hwX hwalk
-  simp at hlen
+  have hwalk := (hp.suffix_walk (by simpa using hpre : (L ++ [v] ++ [w]) <+: p)).mono (fun z hz => List.mem_append_left _ hz)
+  have hb := hEC.walk_bound (fun hw => hp.not_prefix_of_mem hw hpre) hwalk
+  have h1 := prefix_pair_length hpre
+  have h2 := hp.2.2.2.1
+  simp only [List.length_append, List.length_singleton] at hb
   omega

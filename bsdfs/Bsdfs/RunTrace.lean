@@ -224,27 +224,27 @@ theorem runFacts_of_posOK (hP : ∀ q, q < T.length → PosOK G s t k T q) : Run
     obtain ⟨σ, v, h, sd, hxe⟩ := hca.exit
     exact ⟨e, x, σ, v, h, sd, hca.frame, by have := hca.lt; omega, hca.lt.2.2, hca.top, hxe, fun r h1 h2 => hca.all r (by have := hca.lt; omega) h2⟩
   · intro θ y hd r σ o nw kd hθr hall
-    obtain ⟨e, c0, x, hca⟩ := hcasc θ (RunFacts.isCasc_of_drop hd)
+    obtain ⟨e, c0, x, hca⟩ := hcasc θ (Trace.isCasc_of_drop hd)
     rcases Nat.lt_or_ge r x with hrx | hrx
     · exact hca.drop_last y hd r σ o nw kd hθr hrx
     · obtain ⟨σx, vx, hx, sdx, hxe⟩ := hca.exit
       have := hall x (by have := hca.lt; omega) hrx
-      rw [RunFacts.not_isCasc_of_exit hxe] at this; cases this
+      rw [Trace.not_isCasc_of_exit hxe] at this; cases this
   · intro q z hd hno
-    obtain ⟨e, c0, x, hca⟩ := hcasc q (RunFacts.isCasc_of_deq hd)
+    obtain ⟨e, c0, x, hca⟩ := hcasc q (Trace.isCasc_of_deq hd)
     obtain ⟨q', h1, h2, hq'⟩ := hca.deq_drop z hd hno
     exact ⟨q', h2, hq', fun r hr1 hr2 => hca.all r (by omega) (by have := hca.lt; omega)⟩
   · intro q z hd htop
-    obtain ⟨e, c0, x, hca⟩ := hcasc q (RunFacts.isCasc_of_deq hd)
+    obtain ⟨e, c0, x, hca⟩ := hcasc q (Trace.isCasc_of_deq hd)
     obtain ⟨q', h1, h2, hq'⟩ := hca.deq_origin z hd htop
     exact ⟨q', h2, hq', fun r hr1 hr2 => hca.all r (by omega) (by have := hca.lt; omega)⟩
   · intro q₁ q₂ z hlt hd₁ hd₂
-    obtain ⟨e, c0, x, hca⟩ := hcasc q₁ (RunFacts.isCasc_of_deq hd₁)
+    obtain ⟨e, c0, x, hca⟩ := hcasc q₁ (Trace.isCasc_of_deq hd₁)
     obtain ⟨σx, vx, hx, sdx, hxe⟩ := hca.exit
     rcases Nat.lt_trichotomy q₂ x with h | h | h
     · rw [hca.deq_once z hd₁ q₂ hlt h] at hd₂; cases hd₂
     · subst h; simp [deqAt, hxe] at hd₂
-    · exact ⟨x, hca.lt.2.2, h, RunFacts.not_isCasc_of_exit hxe⟩
+    · exact ⟨x, hca.lt.2.2, h, Trace.not_isCasc_of_exit hxe⟩
   · intro e x hfr; exact (hcall e x hfr).mono
   · intro e x σ u h hfr he; exact (hcall e x hfr).scan σ u h he
   · intro e x hfr; exact (hcall e x hfr).complete

@@ -80,35 +80,21 @@ theorem clique_m : (clique c).m = c * (c - 1) := by
 theorem clique_size (hc : 1 ≤ c) : c + 1 + (clique c).m = c * c + 1 := by
   rw [clique_m]
   obtain ⟨d, rfl⟩ : ∃ d, c = d + 1 := ⟨c - 1, by omega⟩
-  simp only [Nat.add_sub_cancel, Nat.add_mul, Nat.mul_add, Nat.mul_one, Nat.one_mul]
-  omega
+  simp only [Nat.add_sub_cancel]
+  nat_poly
 
 /-- the clique trap of bsdfs.tex: no output, the term event after c · N(c, k) steps -/
 theorem clique_run (k : Nat) (hc : 1 ≤ c) : obsSteps (bsdfs (clique c) (cS c) (cT c) k) = [0, c * sweepCalls c k 0] := by
   have hpos : 0 < (cBlk c).length := by rw [cBlk_length]; omega
   have ctx : SweepCtx (clique c) (cT c) k (cBlk c) [] [] 0 0 k :=
     { nodup := cBlk_nodup c, t_blk := cT_not_blk c, t_X := by simp, succ := clique_succ_B c, X_blk := by simp, P_blk := by simp, P_len := rfl, bound := by omega }
-  have hroot : ⦃fun st => ⌜st.S = #[] ∧ st.b = Vector.replicate (c + 1) 0 ∧ st.steps = 0 ∧ st.trace.toList = [Ev.start 0]⌝⦄ search (clique c) (cT c) k (cS c) 0
-      ⦃⇓ _ st => ⌜st.steps = c * sweepCalls c k 0 ∧ ∃ E, st.trace.toList = [Ev.start 0] ++ E ∧ obsSteps E = []⌝⦄ := by
-    refine (StateM.triple_iff _ _ _).mpr fun st hst => ?_
-    have hsw := sweep_spec (clique c) (cT c) k (cBlk c) [] [] 0 0 k ctx 0 (Nat.zero_le _) hpos #[] (Vector.replicate (c + 1) 0) 0 [Ev.start 0]
-    rw [cS_eq c hc]
-    obtain ⟨-, -, -, -, hσ, hE⟩ := (StateM.triple_iff _ _ _).mp hsw st ⟨hst.1, hst.2.1, hst.2.2.1, hst.2.2.2, rfl, fun j hj _ => by simp, by simp⟩
-    exact ⟨hσ.trans (by simp [cBlk_length]), hE⟩
-  unfold bsdfs
-  dsimp only
-  generalize hx : StateT.run _ _ = x
-  have key : ∃ E, x.2.trace.toList = [Ev.start 0] ++ E ++ [Ev.term (c * sweepCalls c k 0)] ∧ obsSteps E = [] := by
-    refine StateM.of_wp_run_eq hx (fun x => ∃ E, x.2.trace.toList = [Ev.start 0] ++ E ++ [Ev.term (c * sweepCalls c k 0)] ∧ obsSteps E = []) ?_
-    mvcgen [M.tick, M.emit, M.steps, hroot]
-    case vc2.post.success =>
-      -- the start event, the sweep, the term event
-      obtain ⟨hσ, E, hE, hobs⟩ := ‹_ = c * sweepCalls c k 0 ∧ _›
-      simp +zetaDelta only
-      exact ⟨E, by rw [Array.toList_push, hE, hσ], hobs⟩
-  obtain ⟨E, hT, hE⟩ := key
-  have hx' : x.run.snd.trace.toList = x.2.trace.toList := rfl
-  rw [hx', hT, obsSteps_append, obsSteps_append, hE]
-  rfl
+  have hsw := sweep_spec (clique c) (cT c) k (cBlk c) [] [] 0 0 k ctx 0 (Nat.zero_le _) hpos #[] (Vector.replicate (c + 1) 0) 0 [Ev.start 0]
+  simp only [Nat.add_zero] at hsw
+  refine bsdfs_of_root (fun st => st.S = #[] ∧ st.b = Vector.replicate (c + 1) 0 ∧ st.steps = 0 ∧ st.trace.toList = [Ev.start 0]) (fun T => obsSteps T = [0, c * sweepCalls c k 0]) ⟨rfl, rfl, rfl, rfl⟩ ?_
+  refine (StateM.triple_iff _ _ _).mpr fun st hpre => ?_
+  obtain ⟨-, -, -, -, hσ, E, hE, hobs⟩ := (StateM.triple_iff _ _ _).mp hsw st ⟨hpre.1, hpre.2.1, hpre.2.2.1, hpre.2.2.2, rfl, fun j hj _ => by simp, by simp⟩
+  -- the start event, the sweep, the term event
+  rw [cS_eq c hc, hE, hσ, obsSteps_append, obsSteps_append, hobs, cBlk_length]
+  simp [obsSteps]
 
 end clique

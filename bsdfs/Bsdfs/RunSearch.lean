@@ -16,8 +16,6 @@ variable {n : Nat}
 
 section outputs
 
-theorem outputs_append' (A B : List (Ev n)) : outputs (A ++ B) = outputs A ++ outputs B := by simp [outputs]
-
 /-- an output of the events after e0 sits at a position after e0 -/
 theorem output_pos {T0 E : List (Ev n)} {e0 : Ev n} {p : List (Fin n)} (hp : p ∈ outputs E) : ∃ q σ, T0.length < q ∧ q < (T0 ++ e0 :: E).length ∧ (T0 ++ e0 :: E)[q]? = some (.output σ p) := by
   unfold outputs at hp
@@ -134,7 +132,7 @@ theorem tl_output (pre : SearchPre G s t k h v S0 b0) (hhk : h < k) {pref : List
   have hstk := Trace.stk_snoc_other (T := T) (e := .output σ (S0.toList ++ [v, t])) (by intros; simp) (by intros; simp)
   refine { ext := ?_, stk0 := ?_, bar0 := ?_, stk_now := ?_, bar_now := ?_, isOpen := ?_, ev0 := ?_, seg := ?_, scan := ?_ }
   · obtain ⟨σ0, E, hE, hN⟩ := tl.ext
-    exact ⟨σ0, E ++ [.output σ (S0.toList ++ [v, t])], by rw [hE]; simp, by rw [outputs_append', hN]; simp [outputs]⟩
+    exact ⟨σ0, E ++ [.output σ (S0.toList ++ [v, t])], by rw [hE]; simp, by rw [outputs_append, hN]; simp [outputs]⟩
   · rw [Trace.stk_append (by omega)]; exact tl.stk0
   · intro z; rw [Trace.bar_append (by omega)]; exact tl.bar0 z
   · rw [List.length_append, List.length_singleton, hstk]; exact tl.stk_now
@@ -201,7 +199,7 @@ theorem tl_child_post {pref : List (Fin n)} {b : Vector Nat n} {N : List (List (
   refine { ext := ?_, stk0 := ?_, bar0 := ?_, stk_now := tc.stk_now, bar_now := tc.bar_now, isOpen := ?_, ev0 := ?_, seg := ?_, scan := ?_ }
   · obtain ⟨σ0, E, hE, hN⟩ := tl.ext
     refine ⟨σ0, E ++ Ev.enter σc w (h + 1) :: Ec, by rw [hEc, hE]; simp, ?_⟩
-    rw [outputs_append', hN, ← hNc]; simp [outputs]
+    rw [outputs_append, hN, ← hNc]; simp [outputs]
   · rw [hEc, Trace.stk_append (by omega)]; exact tl.stk0
   · intro z; rw [hEc, Trace.bar_append (by omega)]; exact tl.bar0 z
   · intro q h1 h2
@@ -239,10 +237,6 @@ end steps
 
 section exits
 variable {G : Graph n} {s t : Fin n} {k h : Nat} {v : Fin n} {S0 : Array (Fin n)} {b0 : Vector Nat n} {T0 : List (Ev n)}
-
-theorem Trace.isCasc_enter {T : List (Ev n)} {q σ : Nat} {u : Fin n} {hh : Nat} (he : T[q]? = some (.enter σ u hh)) : isCasc T q = false := by simp [isCasc, he]
-
-theorem Trace.isCasc_raise {T : List (Ev n)} {q σ : Nat} {x : Fin n} {o nw : Nat} (he : T[q]? = some (.write σ x o nw .raise)) : isCasc T q = false := by simp [isCasc, he]
 
 /-- Per-Call Global Monotonicity (lem:per-call-monotone): the barriers at exit are at least those at entry -/
 theorem SearchPost.mono_all (pre : SearchPre G s t k h v S0 b0) {r : Nat} {b : Vector Nat n} {N : List (List (Fin n))} (hpost : SearchPost G s t k h v S0 b0 r b N) (z : Fin n) : b0[z] ≤ b[z] := by
@@ -295,7 +289,7 @@ theorem tl_exit (pre : SearchPre G s t k h v S0 b0) {b : Vector Nat n} {N : List
   -- the outputs of the call are the outputs of its loop
   obtain ⟨σe, E, hE, hN⟩ := tl.ext
   have hTf : T ++ Etl ++ [Ev.exit σx v h sd f] = T0 ++ Ev.enter σe v h :: (E ++ Etl ++ [Ev.exit σx v h sd f]) := by rw [hE]; simp
-  have houts : outputs (E ++ Etl ++ [Ev.exit σx v h sd f]) = N := by rw [outputs_append', outputs_append', hN, hout]; simp [outputs]
+  have houts : outputs (E ++ Etl ++ [Ev.exit σx v h sd f]) = N := by rw [outputs_append, outputs_append, hN, hout]; simp [outputs]
   have hout_iff : (∃ q σ' P, T0.length < q ∧ q < T.length + Etl.length ∧ (T ++ Etl ++ [Ev.exit σx v h sd f])[q]? = some (.output σ' P)) ↔ N ≠ [] := by
     constructor
     · rintro ⟨q, σ', P, h1, h2, hq⟩
@@ -350,14 +344,14 @@ theorem tl_exit (pre : SearchPre G s t k h v S0 b0) {b : Vector Nat n} {N : List
   · -- the entry
     subst hq
     refine ⟨by rw [hassoc]; exact tl.ev0.append (by omega), fun σ' v' h' _ => ⟨_, hcall⟩, fun hc => ?_⟩
-    rw [Trace.isCasc_enter hent'] at hc; cases hc
+    rw [Trace.not_isCasc_of_enter hent'] at hc; cases hc
   rcases Nat.lt_or_ge q T.length with hq' | hq'
   · rw [hassoc]; exact (tl.seg q hq hq').append hq'
   rcases Nat.lt_or_ge q (T.length + Etl.length) with hq'' | hq''
   · exact htail hfr q hq' hq''
   · -- the exit
     rw [show q = T.length + Etl.length by omega]
-    refine ⟨?_, fun σ' v' h' he => by rw [hx] at he; simp at he, fun hc => by rw [RunFacts.not_isCasc_of_exit hx] at hc; cases hc⟩
+    refine ⟨?_, fun σ' v' h' he => by rw [hx] at he; simp at he, fun hc => by rw [Trace.not_isCasc_of_exit hx] at hc; cases hc⟩
     simp only [EvOK, hx, hstkx]
     exact ⟨by simp, by simp [pre.size]⟩
 
@@ -399,7 +393,7 @@ theorem tl_exit_fruitful (pre : SearchPre G s t k h v S0 b0) {sd : Nat} {b b' : 
     have hstkq : stk (T ++ Ec ++ [Ev.exit σx v h sd (decide (sd ≤ k))]) q = (S0.push v).toList := by rw [Trace.stk_append (by omega)]; exact htc.stk q h1 (by omega)
     refine ⟨(htc.ev q h1 hq).append hq, fun σ' v' h' he => ?_, fun _ => ⟨T0.length, T.length, T.length + Ec.length, ?_⟩⟩
     · rw [List.getElem?_append_left hq] at he
-      rw [Trace.isCasc_enter he] at hcq; cases hcq
+      rw [Trace.not_isCasc_of_enter he] at hcq; cases hcq
     have h0 : stk (T ++ Ec ++ [Ev.exit σx v h sd (decide (sd ≤ k))]) T0.length = S0.toList := by
       rw [List.append_assoc, Trace.stk_append (by omega)]; exact tl.stk0
     refine { frame := hfr, lt := ⟨hlen0, h1, h2⟩, top := ?_, exit := ?_, all := ?_, drop_last := ?_, deq_once := ?_, deq_drop := ?_, deq_origin := ?_ }
@@ -476,7 +470,7 @@ theorem tl_exit_raise (pre : SearchPre G s t k h v S0 b0) {sd : Nat} {b : Vector
     rw [show q = T.length by omega]
     have hq : T.length < (T ++ [Ev.write σw v b[v] (k - h + 1) .raise]).length := by simp
     have hlast' : (T ++ [Ev.write σw v b[v] (k - h + 1) .raise] ++ [Ev.exit σx v h sd (decide (sd ≤ k))])[T.length]? = some (.write σw v b[v] (k - h + 1) .raise) := by rw [List.getElem?_append_left hq]; exact hlast
-    refine ⟨?_, fun σ' v' h' he => by rw [hlast'] at he; simp at he, fun hc => by rw [Trace.isCasc_raise hlast'] at hc; cases hc⟩
+    refine ⟨?_, fun σ' v' h' he => by rw [hlast'] at he; simp at he, fun hc => by rw [Trace.not_isCasc_of_raise hlast'] at hc; cases hc⟩
     simp only [EvOK, hlast']
     rw [Trace.stk_append (by simp), Trace.stk_append (Nat.le_refl _), tl.stk_now, Trace.bar_append (by simp), Trace.bar_append (Nat.le_refl _), tl.bar_now]
     exact ⟨rfl, fun hvt => pre.t_not_mem (by simp [hvt]), by simp, by simp [pre.size]; omega, by omega⟩

@@ -18,9 +18,7 @@ theorem sum_range'_sub (c : Nat) : ∀ L, L ≤ c → 2 * ((List.range' 1 L).map
     have ih := sum_range'_sub c L (by omega)
     rw [List.range'_concat, List.map_append, List.sum_append]
     simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil]
-    have h1 : (L + 1) * (L + 1 + 1) = L * (L + 1) + 2 * (L + 1) := by simp only [Nat.add_mul, Nat.mul_add, Nat.mul_one] <;> omega
-    have h2 : 2 * (L + 1) * c = 2 * L * c + 2 * c := by simp only [Nat.add_mul, Nat.mul_add, Nat.mul_one] <;> omega
-    omega
+    nat_poly
 
 /-- N(c, L) = 1 + L c - L(L + 1)/2 for L < c -/
 theorem sweepCalls_closed {c L : Nat} (hL : L ≤ c - 1) : 2 * sweepCalls c L 0 + L * (L + 1) = 2 + 2 * L * c := by
@@ -69,9 +67,7 @@ theorem gate_tight_aux (j c N1 N2 : Nat) (H1 : 2 * N1 + (j + 3) * (j + 3 + 1) = 
   have H2c := congrArg (· * c) H2
   have Hcc := Nat.mul_le_mul_right c Hc
   rw [show 2 * (j + 6) - 6 = 2 * j + 6 by omega]
-  simp only [Nat.add_mul, Nat.mul_add, Nat.mul_assoc, Nat.mul_comm, Nat.mul_left_comm] at H1 H2 H1c H2c Hc Hcc ⊢
-  simp only [← Nat.mul_assoc] at H1 H2 H1c H2c Hc Hcc ⊢
-  omega
+  nat_poly
 
 /-- on Γ_c with c ≥ k², the interval (o_1, o_2] costs at least (2k - 6)(n + m) steps -/
 theorem gateD1_ge (k c : Nat) (hk : 6 ≤ k) (hc : k * k ≤ c) : (2 * k - 6) * (c + 4 + (gate c).m) ≤ gateD1 c k := by
@@ -101,9 +97,7 @@ theorem worst_case_ratio (p q : Nat) (hpq : p < 2 * q) :
   have h1 : p * (6 * (r + 1)) ≤ (r + 1) * (2 * (6 * (r + 1)) - 6) := by
     have h2 : p * (6 * (r + 1)) ≤ (2 * r + 1) * (6 * (r + 1)) := Nat.mul_le_mul_right _ (by omega)
     rw [show 2 * (6 * (r + 1)) - 6 = 12 * r + 6 by omega]
-    simp only [Nat.add_mul, Nat.mul_add, Nat.mul_assoc, Nat.mul_comm, Nat.mul_left_comm] at h2 ⊢
-    simp only [← Nat.mul_assoc] at h2 ⊢
-    omega
+    nat_poly
   calc p * (6 * (r + 1)) * _ ≤ (r + 1) * (2 * (6 * (r + 1)) - 6) * _ := Nat.mul_le_mul_right _ h1
     _ = (r + 1) * ((2 * (6 * (r + 1)) - 6) * _) := Nat.mul_assoc _ _ _
     _ ≤ (r + 1) * (x.2 - x.1) := Nat.mul_le_mul_left _ hle
@@ -128,9 +122,7 @@ theorem amortized_ratio (p q : Nat) (hpq : p < q) :
   have h1 : p * (2 * (6 * (r + 1) + 2)) ≤ (r + 1) * (2 * (6 * (r + 1)) - 6) := by
     have h2 : p * (2 * (6 * (r + 1) + 2)) ≤ r * (2 * (6 * (r + 1) + 2)) := Nat.mul_le_mul_right _ (by omega)
     rw [show 2 * (6 * (r + 1)) - 6 = 12 * r + 6 by omega]
-    simp only [Nat.add_mul, Nat.mul_add, Nat.mul_comm, Nat.mul_left_comm] at h2 ⊢
-    simp only [← Nat.mul_assoc] at h2 ⊢
-    omega
+    nat_poly
   calc p * (2 * (6 * (r + 1) + 2) * _) = p * (2 * (6 * (r + 1) + 2)) * _ := (Nat.mul_assoc _ _ _).symm
     _ ≤ (r + 1) * (2 * (6 * (r + 1)) - 6) * _ := Nat.mul_le_mul_right _ h1
     _ = (r + 1) * ((2 * (6 * (r + 1)) - 6) * _) := Nat.mul_assoc _ _ _
@@ -141,9 +133,7 @@ theorem amortized_ratio (p q : Nat) (hpq : p < q) :
 theorem clique_tight_aux (i c N : Nat) (H : 2 * N + (i + 2) * (i + 2 + 1) = 2 + 2 * (i + 2) * c) (Hc0 : (i + 2) * (i + 2) ≤ c) : (i + 1) * (c * c + 1) ≤ c * N := by
   have Hc := congrArg (· * c) H
   have Hcc := Nat.mul_le_mul_right c Hc0
-  simp only [Nat.mul_add, Nat.mul_assoc, Nat.mul_comm, Nat.mul_left_comm] at H Hc Hc0 Hcc ⊢
-  simp only [← Nat.mul_assoc] at H Hc Hc0 Hcc ⊢
-  omega
+  nat_poly
 
 /-- on G_c with c ≥ k² (k ≥ 2), the only interval costs at least (k - 1)(n + m) steps -/
 theorem clique_lower (k c : Nat) (hk : 2 ≤ k) (hc : k * k ≤ c) : (k - 1) * (c + 1 + (clique c).m) ≤ c * sweepCalls c k 0 := by

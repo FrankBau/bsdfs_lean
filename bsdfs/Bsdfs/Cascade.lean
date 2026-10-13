@@ -16,11 +16,6 @@ variable {n : Nat}
 @[simp] theorem vset_get (b : Vector Nat n) (p : Fin n) (j : Nat) (hj : j < n) (c : Nat) : (b.set p.1 c p.2)[j] = if p.1 = j then c else b[j] :=
   Vector.getElem_set p.2 hj
 
-theorem range_eq_append_cons {pref suff : List Nat} {cur : Nat} (h : List.range n = pref ++ cur :: suff) : cur = pref.length := by
-  have h1 : (List.range n)[pref.length]'(by rw [h]; simp) = cur := by simp only [h]; simp
-  simp at h1
-  exact h1.symm
-
 /-- facts about the cascade queue that hold between any two steps -/
 structure CascCore (G : Graph n) (t v : Fin n) (sd : Nat) (S0 : Array (Fin n)) (b0 : Vector Nat n) (queue : Array (Fin n × Nat)) (b : Vector Nat n) : Prop where
   pos : 0 < queue.size

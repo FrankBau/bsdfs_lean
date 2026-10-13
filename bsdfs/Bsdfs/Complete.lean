@@ -16,42 +16,6 @@ set_option mvcgen.warning false
 
 variable {n : Nat}
 
-/-! ## More list facts -/
-
-theorem Graph.Edges.append_cons {G : Graph n} {A B : List (Fin n)} {v : Fin n} (hA : G.Edges (A ++ [v])) (hB : G.Edges (v :: B)) : G.Edges (A ++ v :: B) := by
-  induction A with
-  | nil => simpa using hB
-  | cons a A ih =>
-    cases A with
-    | nil => exact ⟨hA.1, hB⟩
-    | cons a' A => exact ⟨hA.1, ih hA.2⟩
-
-theorem Graph.edges_of_stack {G : Graph n} {s t : Fin n} {L : List (Fin n)} (h : StackPath G s t L) : G.Edges L := (Graph.edges_iff_zip G L).mpr h.2.2.2
-
-/-- the suffix of a bounded path from the last node of a prefix is a walk avoiding the prefix -/
-theorem Graph.BoundedPath.suffix_walk {G : Graph n} {k : Nat} {s t v : Fin n} {L p : List (Fin n)} (hp : G.BoundedPath k s t p) (hpre : (L ++ [v]) <+: p) : G.Walk (L ++ [v]) t v (p.length - L.length - 1) := by
-  obtain ⟨R, rfl⟩ := hpre
-  obtain ⟨-, hlast, hnd, -, hedge⟩ := hp
-  rw [← Graph.edges_iff_zip] at hedge
-  have hnd' : (L ++ [v] ++ R).Nodup := by simpa using hnd
-  have hw := Graph.walk_of_list (G := G) (X := L ++ [v]) (t := t) (v :: R) v rfl ?_ (Graph.Edges.of_append_right (A := L) (by simpa using hedge)) ?_
-  · simpa using hw
-  · rw [List.append_assoc, List.getLast?_append] at hlast
-    cases h : (v :: R).getLast? with
-    | none => simp at h
-    | some a => simp only [List.singleton_append] at hlast; rw [h] at hlast; simpa using hlast
-  · intro z hz hzL
-    simp only [List.tail_cons] at hz
-    exact (List.nodup_append.mp hnd').2.2 z hzL z hz rfl
-
-theorem head_append_cons {L R : List (Fin n)} {v : Fin n} : (L ++ v :: R).head? = (L ++ [v]).head? := by
-  cases L <;> simp
-
-theorem prefix_of_head {s : Fin n} {p : List (Fin n)} (h : p.head? = some s) : [s] <+: p := by
-  cases p with
-  | nil => simp at h
-  | cons a p => simp at h; subst h; exact ⟨p, rfl⟩
-
 /-! ## The spec of `search` -/
 
 section
@@ -141,24 +105,7 @@ theorem LoopInv.fruitful_return {pref : List (Fin n)} {sd : Nat} {b : Vector Nat
   have := (hinv.sound p hp).1.2.2.2.1
   omega
 
-theorem not_mem_of_nodup_split {α : Type} {xs pref suff : List α} {cur : α} (hnd : xs.Nodup) (h : xs = pref ++ cur :: suff) : cur ∉ pref := by
-  rw [h] at hnd
-  intro hc
-  exact (List.nodup_append.mp hnd).2.2 cur hc cur (by simp) rfl
-
 theorem push_append (S0 : Array (Fin n)) (v w : Fin n) : (S0.push v).toList ++ [w] = S0.toList ++ [v, w] := by simp
-
-theorem eq_of_prefix_pair {L p : List (Fin n)} {v a c : Fin n} (ha : (L ++ [v, a]) <+: p) (hc : (L ++ [v, c]) <+: p) : a = c := by
-  have e1 : L ++ [v, a] = (L ++ [v]) ++ [a] := by simp
-  have e2 : L ++ [v, c] = (L ++ [v]) ++ [c] := by simp
-  rw [e1] at ha; rw [e2] at hc
-  exact eq_of_prefix_snoc ha hc
-
-theorem prefix_pair_length {L p : List (Fin n)} {v w : Fin n} (h : (L ++ [v, w]) <+: p) : L.length + 2 ≤ p.length := by
-  have := h.length_le; simpa using this
-
-theorem prefix_of_pair {L p : List (Fin n)} {v w : Fin n} (h : (L ++ [v, w]) <+: p) : (L ++ [v]) <+: p :=
-  List.IsPrefix.trans ⟨[w], by simp⟩ h
 
 theorem loop_prune (pre : SearchPre G s t k h v S0 b0) {pref : List (Fin n)} {sd : Nat} {b : Vector Nat n} {N : List (List (Fin n))} {w : Fin n} (hinv : LoopInv G s t k h v S0 b0 pref sd b N) (hw : ¬ b[w] + h < k) : LoopInv G s t k h v S0 b0 (pref ++ [w]) sd b N := by
   refine { hinv with sound := ?_, complete := ?_, fruitless := ?_, close := ?_, tgt := ?_ }
@@ -606,26 +553,14 @@ variable (G : Graph n) (s t : Fin n) (k : Nat)
 
 /-- path mode: every such path is output exactly once -/
 theorem bsdfs_complete_once (hG : G.WF) (hst : s ≠ t) : ∀ p, G.BoundedPath k s t p → (outputs (bsdfs G s t k)).count p = 1 := by
-  have hroot := search_spec G hG s t k 0 s #[] (Vector.replicate n 0) []
-  unfold bsdfs
-  dsimp only
-  generalize hx : StateT.run _ _ = x
+  have key : ∃ N, outputs (bsdfs G s t k) = N ∧ N.Nodup ∧ ∀ q, G.BoundedPath k s t q → q ∈ N := by
+    refine bsdfs_of_root (fun st => st.S = #[] ∧ st.b = Vector.replicate n 0 ∧ outputs st.trace.toList = [] ∧ SearchPre G s t k 0 s #[] (Vector.replicate n 0))
+      (fun T => ∃ N, outputs T = N ∧ N.Nodup ∧ ∀ q, G.BoundedPath k s t q → q ∈ N) ⟨rfl, rfl, rfl, root_pre hst⟩ ?_
+    refine (StateM.triple_iff _ _ _).mpr fun st hpre => ?_
+    obtain ⟨-, N, hN, hpost⟩ := (StateM.triple_iff _ _ _).mp (search_spec G hG s t k 0 s #[] (Vector.replicate n 0) []) st hpre
+    -- every bounded path starts with s, so it has the prefix [s] of the root call
+    exact ⟨N, by simp [hN], hpost.nodup, fun q hq => hpost.complete q hq (prefix_of_head hq.1)⟩
   intro p hp
-  have key : ∃ N, outputs x.2.trace.toList = N ∧ N.Nodup ∧ ∀ q, G.BoundedPath k s t q → q ∈ N := by
-    refine StateM.of_wp_run_eq hx (fun x => ∃ N, outputs x.2.trace.toList = N ∧ N.Nodup ∧ ∀ q, G.BoundedPath k s t q → q ∈ N) ?_
-    mvcgen [M.tick, M.emit, M.steps, hroot]
-    case vc1.pre =>
-      -- root call: empty stack, barriers 0
-      simp +zetaDelta only
-      refine ⟨?_, ?_, ?_, root_pre hst⟩ <;> simp
-    case vc2.post.success =>
-      -- every bounded path starts with s, so it has the prefix [s] of the root call
-      obtain ⟨-, N, hN, hpost⟩ := ‹_ = #[] ∧ ∃ N, _ ∧ SearchPost G s t k 0 s #[] _ _ _ N›
-      simp +zetaDelta only
-      refine ⟨N, by simp [hN], hpost.nodup, fun q hq => hpost.complete q hq ?_⟩
-      have e : (#[] : Array (Fin n)).toList ++ [s] = [s] := rfl
-      rw [e]; exact prefix_of_head hq.1
   obtain ⟨N, hN, hnd, hall⟩ := key
-  have hN' : outputs x.run.snd.trace.toList = N := hN
-  rw [hN']
+  rw [hN]
   exact hnd.count_of_mem (hall p hp)

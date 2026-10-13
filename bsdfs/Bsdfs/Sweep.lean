@@ -1,5 +1,4 @@
-import Bsdfs.BsdfsExec
-import Std.Tactic.Do
+import Bsdfs.Basic
 
 /-!
   Lower bounds, part 1: specs of `search` that compute exact step counts.  Generic facts (the trace only grows; a call whose
@@ -14,19 +13,11 @@ set_option mvcgen.warning false
 
 variable {n : Nat}
 
-/-- a Hoare triple over `StateM` is a statement about the run, by definition -/
-theorem StateM.triple_iff {σ α : Type} (x : StateM σ α) (P : σ → Prop) (Q : α → σ → Prop) :
-    ⦃fun s => ⌜P s⌝⦄ x ⦃⇓ r s => ⌜Q r s⌝⦄ ↔ ∀ s, P s → Q (x.run s).1 (x.run s).2 :=
-  ⟨fun h s hs => h s hs, fun h s hs => h s hs⟩
-
 theorem obsSteps_append (A B : List (Ev n)) : obsSteps (A ++ B) = obsSteps A ++ obsSteps B := by
   simp [obsSteps, List.filterMap_append]
 
 theorem ext_push {T0 L : List (Ev n)} {e : Ev n} (h : ∃ E, L = T0 ++ E) : ∃ E, L ++ [e] = T0 ++ E := by
   obtain ⟨E, rfl⟩ := h; exact ⟨E ++ [e], by simp⟩
-
-theorem mem_split {α : Type} {xs pref suff : List α} {cur : α} (h : xs = pref ++ cur :: suff) : cur ∈ xs := by
-  simp [h]
 
 theorem ext_obs_push {T0 L : List (Ev n)} {e : Ev n} (h : ∃ E, L = T0 ++ E ∧ obsSteps E = []) (he : obsSteps [e] = []) : ∃ E, L ++ [e] = T0 ++ E ∧ obsSteps E = [] := by
   obtain ⟨E, rfl, hE⟩ := h; exact ⟨E ++ [e], by simp, by rw [obsSteps_append, hE, he]; rfl⟩
@@ -87,7 +78,7 @@ theorem search_leaf (G : Graph n) (t : Fin n) (k h : Nat) (v : Fin n) (S0 : Arra
   · ⇓⟨xs, sd⟩ st => ⌜st.S = S0.push v ∧ st.b = b0 ∧ sd = k + 1 ∧ st.steps = σ0 + 1 + xs.prefix.length ∧ ∃ E, st.trace.toList = T0 ++ E ∧ obsSteps E = []⌝
   case vc1.step.isTrue.isTrue =>
     obtain ⟨hS, hb, -, -, -⟩ := ‹_ = S0.push v ∧ _ = b0 ∧ _ ∧ _ ∧ _›
-    have hmem := mem_split ‹G.succ v = _ ++ _ :: _›
+    have hmem := mem_of_eq_append_cons ‹G.succ v = _ ++ _ :: _›
     have htest := ‹_ + h < k›
     have hcur := ‹_ = t›
     simp +zetaDelta only at htest
@@ -97,7 +88,7 @@ theorem search_leaf (G : Graph n) (t : Fin n) (k h : Nat) (v : Fin n) (S0 : Arra
     · exact absurd hcur h1
   case vc2.step.isTrue.isFalse.isTrue.pre =>
     obtain ⟨hS, hb, -, -, -⟩ := ‹_ = S0.push v ∧ _ = b0 ∧ _ ∧ _ ∧ _›
-    have hmem := mem_split ‹G.succ v = _ ++ _ :: _›
+    have hmem := mem_of_eq_append_cons ‹G.succ v = _ ++ _ :: _›
     have htest := ‹_ + h < k›
     have hnS := ‹¬_ ∈ _›
     simp +zetaDelta only at htest hnS
@@ -108,7 +99,7 @@ theorem search_leaf (G : Graph n) (t : Fin n) (k h : Nat) (v : Fin n) (S0 : Arra
     · exact hnS (by simpa using h2)
   case vc3.step.isTrue.isFalse.isTrue.post.success =>
     obtain ⟨hS, hb, -, -, -⟩ := ‹_ = S0.push v ∧ _ = b0 ∧ _ ∧ _ ∧ _›
-    have hmem := mem_split ‹G.succ v = _ ++ _ :: _›
+    have hmem := mem_of_eq_append_cons ‹G.succ v = _ ++ _ :: _›
     have htest := ‹_ + h < k›
     have hnS := ‹¬_ ∈ _›
     simp +zetaDelta only at htest hnS
@@ -192,6 +183,9 @@ theorem succ_list_idx (l X : List α) {h : Nat} (hh : h < l.length) (p : Nat) :
     · rw [List.getElem?_append_left (by omega), List.getElem?_drop]; congr 1; omega
     · rw [List.getElem?_append_right (by omega), h2]; congr 1; omega
 
+theorem getElem_ne_of_not_mem {l : List α} {x : α} (hx : x ∉ l) (j : Nat) (hj : j < l.length) : l[j] ≠ x :=
+  fun he => hx (he ▸ List.getElem_mem hj)
+
 end lists
 
 /-! ## The sweep -/
@@ -251,10 +245,10 @@ theorem sweep_pos {blk X : List (Fin n)} {h : Nat} (hlt : h < blk.length) {pref 
       right; right
       exact ⟨by omega, List.mem_of_getElem? this⟩
 
-theorem trace_obs_trans {T1 L M : List (Ev n)} (h1 : ∃ E, M = T1 ++ E ∧ obsSteps E = []) (h2 : ∃ E, L = M ++ E ∧ obsSteps E = []) : ∃ E, L = T1 ++ E ∧ obsSteps E = [] := by
+theorem trace_obs_trans {T1 L M : List (Ev n)} {os : List Nat} (h1 : ∃ E, M = T1 ++ E ∧ obsSteps E = os) (h2 : ∃ E, L = M ++ E ∧ obsSteps E = []) : ∃ E, L = T1 ++ E ∧ obsSteps E = os := by
   obtain ⟨E1, rfl, h1⟩ := h1
   obtain ⟨E2, rfl, h2⟩ := h2
-  exact ⟨E1 ++ E2, by simp, by rw [obsSteps_append, h1, h2]; rfl⟩
+  exact ⟨E1 ++ E2, by simp, by rw [obsSteps_append, h1, h2, List.append_nil]⟩
 
 section sweepinv
 variable {blk X : List (Fin n)} {k β L h : Nat} {vh : Fin n} {S1 : Array (Fin n)} {b1 : Vector Nat n} {σ1 : Nat} {T1 : List (Ev n)}
@@ -328,7 +322,7 @@ theorem sweepInv_leaf {p sd r : Nat} {st st' : St n} (hinv : sweepInv blk X k β
         · rw [ite_eq_left h3, ite_eq_right (show ¬ (h < j ∧ j ≤ p + 1) by omega), ite_eq_left (show p + 1 < j by omega)]
         · rw [ite_eq_right h3, ite_eq_right (show ¬ (h < j ∧ j ≤ p + 1) by omega), ite_eq_right (show ¬ p + 1 < j by omega)]
   · intro z hz
-    rw [hb, vset_fin, ite_eq_right (show ¬ (blk[p + 1] = z) from fun he => hz (he ▸ List.getElem_mem _)), hbz0 z hz]
+    rw [hb, vset_fin, ite_eq_right (getElem_ne_of_not_mem hz _ _), hbz0 z hz]
 
 end sweepinv
 
@@ -367,7 +361,7 @@ theorem sweep_leaf_cond {G : Graph n} {t : Fin n} {k : Nat} {blk X P : List (Fin
   · obtain ⟨m, hm, hm1, rfl⟩ := List.exists_of_mem_take hu
     by_cases hmh : m ≤ h
     · right
-      refine ⟨fun hut => ctx.t_blk (hut ▸ List.getElem_mem _), ?_⟩
+      refine ⟨getElem_ne_of_not_mem ctx.t_blk _ _, ?_⟩
       rw [Array.toList_push, hS]
       exact List.mem_append_left _ (Array.mem_def.mp ((stack_blk_mem ctx.nodup ctx.P_blk hSP hlt hm).mpr hmh))
     · left
@@ -496,7 +490,7 @@ theorem sweep_spec (G : Graph n) (t : Fin n) (k : Nat) (blk X P : List (Fin n)) 
         · rw [hβ j hj (by omega)]; omega
         · rfl
     · intro z hz
-      rw [hb', vset_fin, ite_eq_right (show ¬ (blk[h] = z) from fun he => hz (he ▸ List.getElem_mem _))]
+      rw [hb', vset_fin, ite_eq_right (getElem_ne_of_not_mem hz _ _)]
     · rw [hσ', show sweepCalls blk.length L h = 1 by rw [hlast]; exact sweepCalls_last _ _, hsucc]
       simp
       omega
@@ -579,7 +573,7 @@ theorem sweep_spec (G : Graph n) (t : Fin n) (k : Nat) (blk X P : List (Fin n)) 
           · rw [ite_eq_left (show h < j ∧ j ≤ blk.length - 1 by omega), ite_eq_left h2]
           · rw [ite_eq_right (show ¬ (h < j ∧ j ≤ blk.length - 1) by omega), ite_eq_right (show ¬ blk.length - 1 < j by omega), ite_eq_right h2]
       · intro z hz
-        rw [vset_fin, ite_eq_right (show ¬ (blk[h] = z) from fun he => hz (he ▸ List.getElem_mem _)), hbz z hz]
+        rw [vset_fin, ite_eq_right (getElem_ne_of_not_mem hz _ _), hbz z hz]
       · rw [hσ, sweepCalls_step (show h < min L (blk.length - 1) by omega),
           show sweepCalls blk.length L (h + 1) + (blk.length - (h + 1)) = (sweepCalls blk.length L (h + 1) + (blk.length - 1 - (h + 1))) + 1 by omega, Nat.mul_succ]
         omega

@@ -74,11 +74,6 @@ theorem Trace.bar_succ_other {p : Nat} (h1 : ∀ σ x o nw kd, tr[p]? ≠ some (
   · next heq => exact absurd heq (h1 _ _ _ _ _)
   · rfl
 
-/-- the stack size changes by at most one per position -/
-theorem Trace.stk_length_succ (p : Nat) : (stk tr (p + 1)).length ≤ (stk tr p).length + 1 ∧ (stk tr p).length ≤ (stk tr (p + 1)).length + 1 := by
-  rw [Trace.stk_succ]
-  split <;> simp <;> omega
-
 /-- while the stack never gets shorter than r, its bottom r entries stay put -/
 theorem Trace.stk_take_persist {p q r : Nat} (hpq : p ≤ q) (hr : ∀ i, p ≤ i → i ≤ q → r ≤ (stk tr i).length) : (stk tr q).take r = (stk tr p).take r := by
   obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le hpq
@@ -167,13 +162,6 @@ theorem Trace.cnt_zero (P : Nat → Prop) [DecidablePred P] {lo hi : Nat} (h : �
   intro q hq
   simp only [List.mem_range'_1] at hq
   simpa using h q (by omega) (by omega)
-
-theorem Trace.cnt_mono {P Q : Nat → Prop} [DecidablePred P] [DecidablePred Q] {lo hi : Nat} (h : ∀ q, lo < q → q ≤ hi → P q → Q q) : cnt P lo hi ≤ cnt Q lo hi := by
-  unfold cnt
-  apply List.countP_mono_left
-  intro q hq hP
-  simp only [List.mem_range'_1] at hq
-  simpa using h q (by omega) (by omega) (by simpa using hP)
 
 theorem nodup_map_of_inj {α β : Type} {l : List α} {f : α → β} (hl : l.Nodup) (hf : ∀ a ∈ l, ∀ b ∈ l, f a = f b → a = b) : (l.map f).Nodup := by
   induction l with
@@ -406,14 +394,5 @@ theorem Trace.Frame.nest {e₁ x₁ e₂ x₂ : Nat} (h₁ : Frame tr e₁ x₁)
     subst this
     have := h₂.2.2.2.1
     omega
-
-/-- a frame is determined by its exit -/
-theorem Trace.Frame.unique {e e' x : Nat} (h : Frame tr e x) (h' : Frame tr e' x) : e = e' := by
-  have hs := h.2.2.2.1
-  have hs' := h'.2.2.2.1
-  rcases Nat.lt_trichotomy e e' with hlt | heq | hgt
-  · have := h.isOpen hlt (Nat.le_of_lt h'.1); omega
-  · exact heq
-  · have := h'.isOpen hgt (Nat.le_of_lt h.1); omega
 
 end frames

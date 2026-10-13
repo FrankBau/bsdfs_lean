@@ -36,32 +36,18 @@ theorem posOK_run {G : Graph n} {s t : Fin n} {k : Nat} {T : List (Ev n)} {N : L
   · exact (tc.seg q (by simpa using h0) hq').append hq'
   · exact posOK_term (σ := σ') (by rw [show q = T.length by omega]; simp)
 
+/-- the root call's `TrCall` gives properties of the whole run -/
+theorem bsdfs_of_trCall (G : Graph n) (s t : Fin n) (k : Nat) (hG : G.WF) (hst : s ≠ t) (Q : List (Ev n) → Prop)
+    (hQ : ∀ N b T σ', TrCall G s t k 0 s #[] (Vector.replicate n 0) [Ev.start 0] N b T → Q (T ++ [Ev.term σ'])) : Q (bsdfs G s t k) := by
+  refine bsdfs_of_root (fun st => st.S = #[] ∧ st.b = Vector.replicate n 0 ∧ st.trace.toList = [Ev.start 0] ∧ SearchPre G s t k 0 s #[] (Vector.replicate n 0) ∧ TrPre 0 #[] (Vector.replicate n 0) [Ev.start 0]) Q
+    ⟨rfl, rfl, rfl, root_pre hst, root_tr⟩ ?_
+  refine (StateM.triple_iff _ _ _).mpr fun st hpre => ?_
+  obtain ⟨-, N, -, tc⟩ := (StateM.triple_iff _ _ _).mp (search_spec_tr G hG s t k 0 s #[] (Vector.replicate n 0) [Ev.start 0]) st hpre
+  exact hQ _ _ _ _ tc
+
 /-- Stage 3c: the run satisfies `RunFacts` -/
-theorem bsdfs_runFacts (G : Graph n) (s t : Fin n) (k : Nat) (hG : G.WF) (hst : s ≠ t) : RunFacts G s t k (bsdfs G s t k) := by
-  have hroot := search_spec_tr G hG s t k 0 s #[] (Vector.replicate n 0)
-  unfold bsdfs
-  dsimp only
-  generalize hx : StateT.run _ _ = x
-  have key : ∀ q, q < x.2.trace.toList.length → PosOK G s t k x.2.trace.toList q := by
-    refine StateM.of_wp_run_eq hx (fun x => ∀ q, q < x.2.trace.toList.length → PosOK G s t k x.2.trace.toList q) ?_
-    mvcgen [M.tick, M.emit, M.steps, hroot]
-    case vc1.pre =>
-      -- root call: empty stack, barriers 0, the start event
-      simp +zetaDelta only
-      refine ⟨?_, ?_, ?_, root_pre hst, ?_⟩
-      · simp
-      · simp
-      · simp
-      · simpa using root_tr
-    case vc2.post.success =>
-      -- every position of the run: the start event, the root call's segment, the term event
-      obtain ⟨-, N, -, tc⟩ := ‹_ = #[] ∧ ∃ N, SearchPost G s t k 0 s #[] _ _ _ N ∧ TrCall G s t k 0 s #[] _ _ N _ _›
-      simp +zetaDelta only at tc ⊢
-      rw [Array.toList_push]
-      exact posOK_run (by simpa using tc)
-  have hx' : x.run.snd.trace.toList = x.2.trace.toList := rfl
-  rw [hx']
-  exact runFacts_of_posOK key
+theorem bsdfs_runFacts (G : Graph n) (s t : Fin n) (k : Nat) (hG : G.WF) (hst : s ≠ t) : RunFacts G s t k (bsdfs G s t k) :=
+  bsdfs_of_trCall G s t k hG hst _ fun _ _ _ _ tc => runFacts_of_posOK (posOK_run tc)
 
 variable (G : Graph n) (s t : Fin n) (k : Nat)
 

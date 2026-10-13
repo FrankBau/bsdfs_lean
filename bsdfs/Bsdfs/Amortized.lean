@@ -19,16 +19,13 @@ variable {n : Nat}
 
 section generic
 
-theorem lsum_append' {α : Type} (L M : List α) (f : α → Nat) : lsum (L ++ M) f = lsum L f + lsum M f := by
-  simp [lsum, List.map_append, List.sum_append]
-
 /-- the cost of (lo, hi] splits at mid -/
 theorem lsum_range'_split (f : Nat → Nat) {lo mid hi : Nat} (h1 : lo ≤ mid) (h2 : mid ≤ hi) : lsum (List.range' (lo + 1) (hi - lo)) f = lsum (List.range' (lo + 1) (mid - lo)) f + lsum (List.range' (mid + 1) (hi - mid)) f := by
   have e : List.range' (lo + 1) (mid - lo) ++ List.range' (mid + 1) (hi - mid) = List.range' (lo + 1) (hi - lo) := by
     have := @List.range'_append (lo + 1) (mid - lo) (hi - mid) 1
     rw [Nat.one_mul, show lo + 1 + (mid - lo) = mid + 1 by omega, show mid - lo + (hi - mid) = hi - lo by omega] at this
     exact this
-  rw [← e, lsum_append']
+  rw [← e, lsum_append]
 
 /-- bounds on the values of filterMap, from bounds at the positions: the τ-th value is at most (off + τ) * C -/
 theorem filterMap_le {β : Type} (f : β → Option Nat) (C : Nat) : ∀ (l : List β) (off : Nat), (∀ p x σ, l[p]? = some x → f x = some σ → σ ≤ (off + (l.take p).countP (fun y => (f y).isSome)) * C) → ∀ τ σ, (l.filterMap f)[τ]? = some σ → σ ≤ (off + τ) * C
@@ -235,13 +232,13 @@ omit hC hS in
 theorem no_drop_asc {q : Nat} {y : Fin n} (h1 : β' < q) (h2 : q ≤ a) : dropAt tr y q = false := by
   cases hd : dropAt tr y q
   · rfl
-  · exact (hA.toRunFacts.asc_pure hC' hS' h1 h2 (RunFacts.isCasc_of_drop hd)).elim
+  · exact (hA.toRunFacts.asc_pure hC' hS' h1 h2 (Trace.isCasc_of_drop hd)).elim
 
 omit hC hS in
 theorem no_deq_asc {q : Nat} {y : Fin n} (h1 : β' < q) (h2 : q ≤ a) : deqAt tr y q = false := by
   cases hd : deqAt tr y q
   · rfl
-  · exact (hA.toRunFacts.asc_pure hC' hS' h1 h2 (RunFacts.isCasc_of_deq hd)).elim
+  · exact (hA.toRunFacts.asc_pure hC' hS' h1 h2 (Trace.isCasc_of_deq hd)).elim
 
 omit hC hS in
 /-- a frame exiting in the ascent (β', a) is fruitless: one open at a' would be open at β' + 1 at depth ≥ m' -/
@@ -262,7 +259,7 @@ theorem asc_exit_fruitless {e x σ : Nat} {v : Fin n} {h sd : Nat} {f : Bool} (h
     · rfl
     · obtain ⟨o, σo, P, ho1, ho2, ho⟩ := (hR.ret e x σ v h sd f hfr hx).mp hf
       have := hC'.between o (by omega) (by omega)
-      rw [RunFacts.isObs_of_output ho] at this; cases this
+      rw [Trace.isObs_of_output ho] at this; cases this
 
 /-- a call entered in the period and not open at a is fruitless: it returns within its phase, with its raise -/
 theorem nR_raise {q σ : Nat} {z : Fin n} {h : Nat} (h1 : β' < q) (h2 : q ≤ β) (he : tr[q]? = some (.enter σ z h)) (hno : ¬ openAt tr a q) :
@@ -372,7 +369,7 @@ theorem period_split {θ : Nat} {y : Fin n} (hθ1 : a < θ) (hθ2 : θ ≤ β) (
     · exact h'
   obtain ⟨σd, o, nw, hdw⟩ := Trace.dropAt_iff.mp hd
   -- the origin frame (e₀, x₀) of the drop's cascade, open since a
-  obtain ⟨e₀, x₀, σ₀, v₀, h₀, sd₀, hf₀, he₀θ, hθx₀, hlen₀, hex₀, hall₀, he₀a⟩ := hR.casc_open (a := a) (RunFacts.isCasc_of_drop hd) (fun r h1' h2' => hC.between r h1' (by have := hS.lt; omega))
+  obtain ⟨e₀, x₀, σ₀, v₀, h₀, sd₀, hf₀, he₀θ, hθx₀, hlen₀, hex₀, hall₀, he₀a⟩ := hR.casc_open (a := a) (Trace.isCasc_of_drop hd) (fun r h1' h2' => hC.between r h1' (by have := hS.lt; omega))
   have hpush₀ := hf₀.push
   have hhq := (hR.enter q σ u h he).1
   have hguard := (hR.enter q σ u h he).2.2.2.1
@@ -641,32 +638,8 @@ theorem amort_run {G : Graph n} {s t : Fin n} {k : Nat} {T : List (Ev n)} {N : L
   · simp; omega
 
 /-- the run satisfies `AmortFacts` -/
-theorem bsdfs_amortFacts (G : Graph n) (s t : Fin n) (k : Nat) (hG : G.WF) (hst : s ≠ t) : AmortFacts G s t k (bsdfs G s t k) := by
-  have hroot := search_spec_tr G hG s t k 0 s #[] (Vector.replicate n 0)
-  unfold bsdfs
-  dsimp only
-  generalize hx : StateT.run _ _ = x
-  have key : (∀ q, q < x.2.trace.toList.length → PosOK G s t k x.2.trace.toList q) ∧ (∃ σ0, x.2.trace.toList[0]? = some (.start σ0)) ∧
-      ∃ y σ1, Frame x.2.trace.toList 1 y ∧ x.2.trace.toList[y + 1]? = some (.term σ1) ∧ x.2.trace.toList.length = y + 2 := by
-    refine StateM.of_wp_run_eq hx (fun x => (∀ q, q < x.2.trace.toList.length → PosOK G s t k x.2.trace.toList q) ∧ (∃ σ0, x.2.trace.toList[0]? = some (.start σ0)) ∧
-      ∃ y σ1, Frame x.2.trace.toList 1 y ∧ x.2.trace.toList[y + 1]? = some (.term σ1) ∧ x.2.trace.toList.length = y + 2) ?_
-    mvcgen [M.tick, M.emit, M.steps, hroot]
-    case vc1.pre =>
-      -- root call: empty stack, barriers 0, the start event
-      simp +zetaDelta only
-      refine ⟨?_, ?_, ?_, root_pre hst, ?_⟩
-      · simp
-      · simp
-      · simp
-      · simpa using root_tr
-    case vc2.post.success =>
-      obtain ⟨-, N, -, tc⟩ := ‹_ = #[] ∧ ∃ N, SearchPost G s t k 0 s #[] _ _ _ N ∧ TrCall G s t k 0 s #[] _ _ N _ _›
-      simp +zetaDelta only at tc ⊢
-      rw [Array.toList_push]
-      exact amort_run (by simpa using tc)
-  have hx' : x.run.snd.trace.toList = x.2.trace.toList := rfl
-  rw [hx']
-  exact { toRunFacts := runFacts_of_posOK key.1, start := key.2.1, root := key.2.2 }
+theorem bsdfs_amortFacts (G : Graph n) (s t : Fin n) (k : Nat) (hG : G.WF) (hst : s ≠ t) : AmortFacts G s t k (bsdfs G s t k) :=
+  bsdfs_of_trCall G s t k hG hst _ fun _ _ _ _ tc => { toRunFacts := runFacts_of_posOK (amort_run tc).1, start := (amort_run tc).2.1, root := (amort_run tc).2.2 }
 
 variable (G : Graph n) (s t : Fin n) (k : Nat)
 

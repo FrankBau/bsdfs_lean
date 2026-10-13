@@ -33,15 +33,7 @@ theorem ObsPre.trans {T0 T1 T : List (Ev n)} {os os' : List Nat} (h1 : ∃ E, T1
   obtain ⟨E1, E2, rfl, h⟩ := h2
   exact ⟨E ++ E1, E2, by simp, by rw [obsSteps_append, hE, h]⟩
 
-theorem trace_obs_trans' {T1 L M : List (Ev n)} {os : List Nat} (h1 : ∃ E, M = T1 ++ E ∧ obsSteps E = os) (h2 : ∃ E, L = M ++ E ∧ obsSteps E = []) : ∃ E, L = T1 ++ E ∧ obsSteps E = os := by
-  obtain ⟨E1, rfl, h1⟩ := h1
-  obtain ⟨E2, rfl, h2⟩ := h2
-  exact ⟨E1 ++ E2, by simp, by rw [obsSteps_append, h1, h2, List.append_nil]⟩
-
 /-! ## Positions in short successor lists -/
-
-theorem eq_append_cons_idx {α : Type} {xs pref suff : List α} {cur : α} (h : xs = pref ++ cur :: suff) : ∃ hp : pref.length < xs.length, xs[pref.length] = cur := by
-  subst h; exact ⟨by simp, by simp⟩
 
 theorem cons2_idx {α : Type} {a b cur : α} {l : List α} : ∀ (p : Nat) (hp : p < (a :: b :: l).length), (a :: b :: l)[p] = cur →
     (p = 0 ∧ cur = a) ∨ (p = 1 ∧ cur = b) ∨ ∃ j, ∃ hj : j < l.length, p = j + 2 ∧ cur = l[j]
@@ -110,9 +102,6 @@ theorem GateCtx.sweep (ctx : GateCtx G s q t g blk) {k : Nat} (P : List (Fin n))
   P_blk := hP
   P_len := hlen
   bound := hb
-
-theorem getElem_ne_of_not_mem {x : Fin n} (hx : x ∉ blk) (j : Nat) (hj : j < blk.length) : blk[j] ≠ x :=
-  fun he => hx (he ▸ List.getElem_mem hj)
 
 /-! ### (a) search(g) at depth 2 -/
 
@@ -205,9 +194,9 @@ theorem gate_g2 (ctx : GateCtx G s q t g blk) (k : Nat) (hk : 6 ≤ k) (S0 : Arr
       rw [hc] at hin
       simp only [List.mem_cons, List.mem_nil_iff, or_false] at hin
       rcases hin with h | h | h
-      · exact ctx.s_blk (h ▸ List.getElem_mem _)
-      · exact ctx.q_blk (h ▸ List.getElem_mem _)
-      · exact ctx.g_blk (h ▸ List.getElem_mem _)
+      · exact getElem_ne_of_not_mem ctx.s_blk _ _ h
+      · exact getElem_ne_of_not_mem ctx.q_blk _ _ h
+      · exact getElem_ne_of_not_mem ctx.g_blk _ _ h
     · exact g2Inv_skip hinv (by omega) rfl rfl rfl rfl
     · exact g2Inv_skip hinv (by omega) rfl rfl rfl rfl
   case vc4.step.isFalse =>
@@ -280,11 +269,6 @@ theorem cQueue_cases (i : Nat) (hi : i < (cQueue q g blk).length) :
   | 0, _ => exact Or.inl ⟨rfl, rfl⟩
   | 1, _ => exact Or.inr (Or.inl ⟨rfl, rfl⟩)
   | j + 2, hi => exact Or.inr (Or.inr ⟨j, by simp [cQueue] at hi; omega, rfl, by simp [cQueue]⟩)
-
-theorem range_split_idx {pref suff : List Nat} {cur : Nat} (h : List.range n = pref ++ cur :: suff) : cur = pref.length := by
-  have h1 : (List.range n)[pref.length]'(by rw [h]; simp) = cur := by simp only [h]; simp
-  simp at h1
-  exact h1.symm
 
 theorem queue_get {queue : Array (Fin n × Nat)} {L : List (Fin n × Nat)} {m : Nat} (hQ : queue.toList = L.take m) {i : Nat} (hi : i < queue.size) :
     ∃ hc : i < L.length, queue[i] = L[i] := by
@@ -364,7 +348,7 @@ theorem cState_relax_B (ctx : GateCtx G s q t g blk) {k : Nat} {S1 : Array (Fin 
       by_cases hlt : i + 2 < j + 2
       · rw [ite_eq_left hlt, ite_eq_left (show i + 2 < j + 3 by omega)]
       · rw [ite_eq_right hlt, ite_eq_right (show ¬ i + 2 < j + 3 by omega)]
-  · rw [hb, vset_fin, ite_eq_right (show ¬ (blk[j] = z) from fun he => h3 (he ▸ List.getElem_mem hj)), hbz z h1 h2 h3]
+  · rw [hb, vset_fin, ite_eq_right (getElem_ne_of_not_mem h3 j hj), hbz z h1 h2 h3]
 
 theorem cOutCost_B {c j : Nat} (hj : j < c) : cOutCost c (j + 2 + 1) = cOutCost c (j + 2) + 1 + (c + if j = 0 then 1 else 0) := by
   unfold cOutCost
@@ -432,7 +416,7 @@ theorem gate_casc (ctx : GateCtx G s q t g blk) (k : Nat) (hk : 6 ≤ k) (S1 : A
       simp only at hsplit hcond
       subst hi
       rw [cInM_B] at hst
-      rcases ctx.pred_B j hj _ (mem_split hsplit) with hpc | hpc | hpc
+      rcases ctx.pred_B j hj _ (mem_of_eq_append_cons hsplit) with hpc | hpc | hpc
       · simp [hpc] at hcond
       · rw [hpc, hst.2.2.2.1, ite_eq_left (show 2 ≤ blk.length + 2 by omega)] at hcond; omega
       · obtain ⟨i, hi, hpc'⟩ := List.mem_iff_getElem.mp hpc
@@ -487,7 +471,7 @@ theorem gate_casc (ctx : GateCtx G s q t g blk) (k : Nat) (hk : 6 ≤ k) (S1 : A
   case vc3.step.isTrue.pre =>
     -- dequeue
     obtain ⟨hst, hσ⟩ := ‹cState q g blk k S1 b1 T1 _ _ _ ∧ _›
-    have hcur := range_split_idx ‹List.range n = _ ++ _ :: _›
+    have hcur := range_eq_append_cons ‹List.range n = _ ++ _ :: _›
     have hlt := ‹_ < Array.size _›
     simp +zetaDelta only
     subst hcur
@@ -499,7 +483,7 @@ theorem gate_casc (ctx : GateCtx G s q t g blk) (k : Nat) (hk : 6 ≤ k) (S1 : A
   case vc4.step.isTrue.post.success =>
     -- the next entry
     obtain ⟨hst, hσ, hc, hqo⟩ := ‹cState q g blk k S1 b1 T1 _ _ _ ∧ _ ∧ ∃ _, _›
-    have hcur := range_split_idx ‹List.range n = _ ++ _ :: _›
+    have hcur := range_eq_append_cons ‹List.range n = _ ++ _ :: _›
     simp only [List.length_append, List.length_singleton]
     rw [← hcur]
     rw [hqo] at hst hσ
@@ -529,7 +513,7 @@ theorem gate_casc (ctx : GateCtx G s q t g blk) (k : Nat) (hk : 6 ≤ k) (S1 : A
   case vc5.step.isFalse =>
     -- break: every entry is processed
     obtain ⟨hst, hσ⟩ := ‹cState q g blk k S1 b1 T1 _ _ _ ∧ _›
-    have hcur := range_split_idx ‹List.range n = _ ++ _ :: _›
+    have hcur := range_eq_append_cons ‹List.range n = _ ++ _ :: _›
     have hge := ‹¬_ < Array.size _›
     simp only [List.length_range]
     subst hcur
@@ -582,13 +566,9 @@ def q1Inv (q t g : Fin n) (blk : List (Fin n)) (k : Nat) (S0 : Array (Fin n)) (b
 
 theorem q1_arith (c N σ : Nat) (hc : 0 < c) :
     σ + 10 + (c + 1) * N + (1 + (c + 1) * c + (c - 1) * (c + 2)) + c * c + 2 * c + 7 = σ + (c + 1) * N + 3 * c * c + 4 * c + 16 := by
-  have h1 : (c + 1) * c = c * c + c := Nat.succ_mul c c
-  have h2 : (c - 1) * (c + 2) + 2 = c * c + c := by
-    obtain ⟨d, rfl⟩ : ∃ d, c = d + 1 := ⟨c - 1, by omega⟩
-    simp only [Nat.add_sub_cancel, Nat.add_mul, Nat.mul_add, Nat.mul_one, Nat.one_mul]
-    omega
-  have h3 : 3 * c * c = 3 * (c * c) := Nat.mul_assoc 3 c c
-  omega
+  obtain ⟨d, rfl⟩ : ∃ d, c = d + 1 := ⟨c - 1, by omega⟩
+  simp only [Nat.add_sub_cancel]
+  nat_poly
 
 theorem q1Inv_leaf {q t g : Fin n} {blk : List (Fin n)} {k : Nat} {S0 : Array (Fin n)} {b0 : Vector Nat n} {σ0 : Nat} {T0 : List (Ev n)} {sd r : Nat} {st st' : St n}
     (hnd : blk.Nodup) (hgb : g ∉ blk) {i : Nat} (hi1 : 1 ≤ i) (hi : i < blk.length) (h : q1Inv q t g blk k S0 b0 σ0 T0 (i + 2) sd st) (hk : 6 ≤ k) (htb : t ∉ blk)
@@ -598,12 +578,12 @@ theorem q1Inv_leaf {q t g : Fin n} {blk : List (Fin n)} {k : Nat} {S0 : Array (F
   obtain ⟨hS0, hbt, hE, hrest⟩ := h
   rw [ite_eq_right (show ¬ i + 2 = 0 by omega), ite_eq_right (show ¬ i + 2 = 1 by omega)] at hrest
   obtain ⟨hsd, hbg, hbb, hσ0⟩ := hrest
-  refine ⟨by rw [hS, hS0], by rw [hb, vset_fin, ite_eq_right (show ¬ (blk[i] = t) from fun he => htb (he ▸ List.getElem_mem hi)), hbt], ?_, ?_⟩
+  refine ⟨by rw [hS, hS0], by rw [hb, vset_fin, ite_eq_right (getElem_ne_of_not_mem htb i hi), hbt], ?_, ?_⟩
   · rw [ite_eq_right (show ¬ i + 2 + 1 = 0 by omega)]
     rw [ite_eq_right (show ¬ i + 2 = 0 by omega)] at hE
-    exact trace_obs_trans' hE hT
+    exact trace_obs_trans hE hT
   · rw [ite_eq_right (show ¬ i + 2 + 1 = 0 by omega), ite_eq_right (show ¬ i + 2 + 1 = 1 by omega)]
-    refine ⟨by omega, by rw [hb, vset_fin, ite_eq_right (show ¬ (blk[i] = g) from fun he => hgb (he ▸ List.getElem_mem hi)), hbg], fun j hj => ?_, ?_⟩
+    refine ⟨by omega, by rw [hb, vset_fin, ite_eq_right (getElem_ne_of_not_mem hgb i hi), hbg], fun j hj => ?_, ?_⟩
     · rw [hb, vset_fin]
       rw [show i + 2 + 1 - 2 = i + 1 by omega]
       rw [show i + 2 - 2 = i by omega] at hbb
@@ -659,7 +639,7 @@ theorem q1Inv_g2 {sd r : Nat} {st st' : St n} (htg : t ≠ g) (htb : t ∉ blk) 
   show st'.S = S0.push q ∧ st'.b[t] = b0[t] ∧ (∃ E, st'.trace.toList = T0 ++ E ∧ obsSteps E = [σ0 + 5]) ∧
     (min sd (r + 1) = 1 ∧ st'.b[g] = k - 1 ∧ (∀ j (hj : j < blk.length), st'.b[blk[j]] = q1Bar k 0 j) ∧
       st'.steps = σ0 + 10 + (blk.length + 1) * sweepCalls blk.length (k - 3) 0 + q1Cost blk.length 0)
-  refine ⟨by rw [hS, hS0], by rw [hbz t htg htb, hbt], trace_obs_trans' hE' hT, by omega, hbg, fun j hj => ?_, ?_⟩
+  refine ⟨by rw [hS, hS0], by rw [hbz t htg htb, hbt], trace_obs_trans hE' hT, by omega, hbg, fun j hj => ?_, ?_⟩
   · rw [hbb j hj]; unfold q1Bar; rw [ite_eq_left rfl]
   · rw [show q1Cost blk.length 0 = 0 from rfl]; omega
 
@@ -673,7 +653,7 @@ theorem q1Inv_sweep {sd r : Nat} {st st' : St n} (htb : t ∉ blk) (h : q1Inv q 
   show st'.S = S0.push q ∧ st'.b[t] = b0[t] ∧ (∃ E, st'.trace.toList = T0 ++ E ∧ obsSteps E = [σ0 + 5]) ∧
     (min sd (r + 1) = 1 ∧ st'.b[g] = k - 1 ∧ (∀ j (hj : j < blk.length), st'.b[blk[j]] = q1Bar k 1 j) ∧
       st'.steps = σ0 + 10 + (blk.length + 1) * sweepCalls blk.length (k - 3) 0 + q1Cost blk.length 1)
-  refine ⟨by rw [hS, hS0], by rw [hbz t htb, hbt], trace_obs_trans' hE' hT, by omega, by rw [hbz g hgb, hbg], fun j hj => ?_, ?_⟩
+  refine ⟨by rw [hS, hS0], by rw [hbz t htb, hbt], trace_obs_trans hE' hT, by omega, by rw [hbz g hgb, hbg], fun j hj => ?_, ?_⟩
   · rw [hbb j hj]; unfold q1Bar; rw [ite_eq_right (show ¬ (1 = 0) by omega)]
     by_cases hj0 : j = 0
     · rw [ite_eq_left hj0, ite_eq_left (show j < 1 by omega)]
@@ -764,7 +744,7 @@ theorem gate_q1 (ctx : GateCtx G s q t g blk) (k : Nat) (hk : 6 ≤ k) (S0 : Arr
       simp only [List.length_append, List.length_singleton, hp]
       exact q1Inv_out hinv rfl rfl rfl (by rw [Array.toList_push])
     · exact absurd (hc.symm.trans hcur) (Ne.symm ctx.t_g)
-    · exact absurd (hcur ▸ hc ▸ List.getElem_mem hj) ctx.t_blk
+    · exact absurd (hc.symm.trans hcur) (getElem_ne_of_not_mem ctx.t_blk j hj)
   case vc2.step.isTrue.isFalse.isTrue.post.success =>
     -- the calls at g (phase (a)), at B_0 (the sweep with bound 1) and at the later block nodes (leaves)
     have hsplit := ‹G.succ q = _ ++ _ :: _›
@@ -854,7 +834,7 @@ theorem gate_q1 (ctx : GateCtx G s q t g blk) (k : Nat) (hk : 6 ≤ k) (S0 : Arr
       rw [ite_eq_right (show ¬ blk.length = 0 by omega), sweepCalls_one ctx.pos]
       have := q1_arith blk.length (sweepCalls blk.length (k - 3) 0) σ0 ctx.pos
       omega
-    · exact trace_obs_trans' (trace_obs_trans' ⟨E, hE, hobs⟩ ⟨E', hE', hobs'⟩) ⟨_, by rw [Array.toList_push], by simp [obsSteps]⟩
+    · exact trace_obs_trans (trace_obs_trans ⟨E, hE, hobs⟩ ⟨E', hE', hobs'⟩) ⟨_, by rw [Array.toList_push], by simp [obsSteps]⟩
   case vc7.post.success.isFalse =>
     -- no raise: sd = 1
     exfalso
@@ -908,7 +888,7 @@ theorem gate_q2 (ctx : GateCtx G s q t g blk) (k : Nat) (hk : 6 ≤ k) (S0 : Arr
       rw [Array.toList_push]
       exact ObsPre.of_output hE hobs (by omega)
     · exact absurd (hc.symm.trans hcur) (Ne.symm ctx.t_g)
-    · exact absurd (hcur ▸ hc ▸ List.getElem_mem hj) ctx.t_blk
+    · exact absurd (hc.symm.trans hcur) (getElem_ne_of_not_mem ctx.t_blk j hj)
   case vc2.step.isTrue.isFalse.isTrue.post.success =>
     -- a call after the output: the trace grows
     have hsplit := ‹G.succ q = _ ++ _ :: _›
@@ -1252,28 +1232,14 @@ theorem gate_s0 (ctx : GateCtx G s q t g blk) (k : Nat) (hk : 6 ≤ k) (S0 : Arr
 
 /-- the run of BS-DFS on a gate trap: the first three observable events are the start at step 0 and the outputs s q t at step 7
     and s g q t at step 7 + D1 -/
-theorem gate_run (ctx : GateCtx G s q t g blk) (k : Nat) (hk : 6 ≤ k) :
-    ∃ rest, obsSteps (bsdfs G s t k) = [0, 7, 7 + gateD1 blk.length k] ++ rest := by
-  have hroot := gate_s0 ctx k hk #[] (Vector.replicate n 0) 0 [Ev.start 0] rfl (by simp) (by simp) (by simp) (fun j hj => by simp)
-  unfold bsdfs
-  dsimp only
-  generalize hx : StateT.run _ _ = x
-  have key : ObsPre [] [0, 7, 7 + gateD1 blk.length k] x.2.trace.toList := by
-    refine StateM.of_wp_run_eq hx (fun x => ObsPre [] [0, 7, 7 + gateD1 blk.length k] x.2.trace.toList) ?_
-    mvcgen [M.tick, M.emit, M.steps, hroot]
-    case vc2.post.success =>
-      -- the start event, the root call, the term event
-      obtain ⟨E1, E2, hT, hE1⟩ := ‹ObsPre [Ev.start 0] _ _›
-      simp +zetaDelta only
-      refine ObsPre.ext ?_ ⟨_, by rw [Array.toList_push]⟩
-      rw [hT]
-      refine ⟨[Ev.start 0] ++ E1, E2, by simp, ?_⟩
-      rw [obsSteps_append, hE1]
-      simp [obsSteps]
-  obtain ⟨E1, E2, hT, hE1⟩ := key
-  refine ⟨obsSteps E2, ?_⟩
-  have hx' : x.run.snd.trace.toList = x.2.trace.toList := rfl
-  rw [hx', hT, obsSteps_append, obsSteps_append, hE1]
-  rfl
+theorem gate_run (ctx : GateCtx G s q t g blk) (k : Nat) (hk : 6 ≤ k) : ∃ rest, obsSteps (bsdfs G s t k) = [0, 7, 7 + gateD1 blk.length k] ++ rest := by
+  have h : ObsPre [] [0, 7, 7 + gateD1 blk.length k] (bsdfs G s t k) := by
+    refine bsdfs_of_root (fun st => st.S = #[] ∧ st.b = Vector.replicate n 0 ∧ st.steps = 0 ∧ st.trace.toList = [Ev.start 0]) (ObsPre [] [0, 7, 7 + gateD1 blk.length k]) ⟨rfl, rfl, rfl, rfl⟩ ?_
+    refine (StateM.triple_iff _ _ _).mpr fun st hpre => ?_
+    have hO := (StateM.triple_iff _ _ _).mp (gate_s0 ctx k hk #[] (Vector.replicate n 0) 0 [Ev.start 0] rfl (by simp) (by simp) (by simp) (fun j hj => by simp)) st hpre
+    -- the start event, the root call, the term event
+    exact ((ObsPre.trans ⟨[Ev.start 0], rfl, rfl⟩ hO).ext ⟨_, rfl⟩).congr (by simp [obsSteps])
+  obtain ⟨E1, E2, hT, hE1⟩ := h
+  exact ⟨obsSteps E2, by rw [hT, obsSteps_append, obsSteps_append, hE1]; rfl⟩
 
 end gate

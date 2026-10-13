@@ -1,5 +1,4 @@
-import Bsdfs.BsdfsExec
-import Std.Tactic.Do
+import Bsdfs.Basic
 
 /-!
   Proof of `bsdfs_sound`: in path mode, every output of `bsdfs` is a simple s-t path with at most k edges.
@@ -34,9 +33,6 @@ theorem fruitful_frame (G : Graph n) (v : Fin n) (sd : Nat) (S0 : Array (Fin n))
 
 /-! ## Paths as node lists -/
 
-theorem mem_of_eq_append_cons {α : Type} {xs pref suff : List α} {cur : α} (h : xs = pref ++ cur :: suff) : cur ∈ xs := by
-  simp [h]
-
 /-- an edge of l ++ [b] is an edge of l or the new last edge -/
 theorem mem_zip_tail_snoc {α : Type} {l : List α} {b : α} {e : α × α} (he : e ∈ (l ++ [b]).zip (l ++ [b]).tail) : e ∈ l.zip l.tail ∨ (l.getLast? = some e.1 ∧ e.2 = b) := by
   induction l with
@@ -60,28 +56,27 @@ def StackPath (G : Graph n) (s t : Fin n) (L : List (Fin n)) : Prop :=
 def OutputsSound (G : Graph n) (s t : Fin n) (k : Nat) (tr : Array (Ev n)) : Prop :=
   ∀ p ∈ outputs tr.toList, G.BoundedPath k s t p
 
+theorem nodup_snoc {α : Type} {L : List α} {w : α} (hnd : L.Nodup) (hw : w ∉ L) : (L ++ [w]).Nodup :=
+  List.nodup_append.mpr ⟨hnd, by simp, fun a ha b hb => by simp at hb; subst hb; rintro rfl; exact hw ha⟩
+
+/-- the edges of L ++ [v] ++ [w]: those of L ++ [v] and (v, w) -/
+theorem edges_snoc {G : Graph n} {L : List (Fin n)} {v w : Fin n} (hedge : ∀ e ∈ (L ++ [v]).zip (L ++ [v]).tail, e.2 ∈ G.succ e.1) (hw : w ∈ G.succ v) :
+    ∀ e ∈ (L ++ [v] ++ [w]).zip (L ++ [v] ++ [w]).tail, e.2 ∈ G.succ e.1 := by
+  intro e he
+  rcases mem_zip_tail_snoc he with h | ⟨h1, h2⟩
+  · exact hedge e h
+  · simp at h1; subst h1; rw [h2]; exact hw
+
 theorem StackPath.snoc {G : Graph n} {s t v w : Fin n} {L : List (Fin n)} (hL : StackPath G s t (L ++ [v])) (hw : w ∈ G.succ v) (hwL : w ∉ L ++ [v]) (hwt : w ≠ t) : StackPath G s t (L ++ [v] ++ [w]) := by
   obtain ⟨hhead, hnd, hts, hedge⟩ := hL
-  refine ⟨?_, ?_, ?_, ?_⟩
+  refine ⟨?_, nodup_snoc hnd hwL, ?_, edges_snoc hedge hw⟩
   · cases L <;> simp_all
-  · rw [List.nodup_append]; exact ⟨hnd, by simp, fun a ha b hb => by simp at hb; subst hb; rintro rfl; exact hwL ha⟩
   · simp only [List.mem_append, List.mem_singleton, not_or] at hts ⊢; exact ⟨⟨hts.1, hts.2⟩, fun h => hwt h.symm⟩
-  · intro e he
-    rcases mem_zip_tail_snoc he with h | ⟨h1, h2⟩
-    · exact hedge e h
-    · simp at h1; subst h1; rw [h2]; exact hw
 
 theorem StackPath.bounded {G : Graph n} {s t v : Fin n} {k : Nat} {L : List (Fin n)} (hL : StackPath G s t (L ++ [v])) (ht : t ∈ G.succ v) (hlen : L.length < k) : G.BoundedPath k s t (L ++ [v] ++ [t]) := by
   obtain ⟨hhead, hnd, hts, hedge⟩ := hL
-  refine ⟨?_, ?_, ?_, ?_, ?_⟩
-  · cases L <;> simp_all
-  · simp
-  · rw [List.nodup_append]; exact ⟨hnd, by simp, fun a ha b hb => by simp at hb; subst hb; rintro rfl; exact hts ha⟩
-  · simp; omega
-  · intro e he
-    rcases mem_zip_tail_snoc he with h | ⟨h1, h2⟩
-    · exact hedge e h
-    · simp at h1; subst h1; rw [h2]; exact ht
+  refine ⟨?_, by simp, nodup_snoc hnd hts, by simp; omega, edges_snoc hedge ht⟩
+  cases L <;> simp_all
 
 theorem OutputsSound.push_iff {G : Graph n} {s t : Fin n} {k : Nat} {tr : Array (Ev n)} {e : Ev n} : OutputsSound G s t k (tr.push e) ↔ OutputsSound G s t k tr ∧ ∀ p ∈ outputs [e], G.BoundedPath k s t p := by
   simp only [OutputsSound, Array.toList_push, outputs_append, List.mem_append]
@@ -145,15 +140,8 @@ variable (G : Graph n) (s t : Fin n) (k : Nat)
 
 /-- path mode: every output is a simple s-t path with at most k edges -/
 theorem bsdfs_sound (hst : s ≠ t) : ∀ p ∈ outputs (bsdfs G s t k), G.BoundedPath k s t p := by
-  have hroot := search_sound G s t k 0 s #[]
-  unfold bsdfs
-  dsimp only
-  generalize hx : StateT.run _ _ = x
-  intro p hp
-  refine StateM.of_wp_run_eq hx (fun x => OutputsSound G s t k x.2.trace) ?_ p hp
-  mvcgen [M.tick, M.emit, M.steps, hroot]
-  case vc1.pre =>
-    -- root call: the stack [s] is a stack path because s ≠ t
-    refine ⟨rfl, ⟨rfl, by simp, by simpa using Ne.symm hst, by simp⟩, rfl, Nat.zero_le k, ?_⟩
-    simp +zetaDelta [OutputsSound]
-  all_goals simp_all +zetaDelta [OutputsSound.push_iff]
+  -- the root call: the stack [s] is a stack path because s ≠ t
+  refine bsdfs_of_root (fun st => st.S = #[] ∧ StackPath G s t ((#[] : Array (Fin n)).toList ++ [s]) ∧ (#[] : Array (Fin n)).size = 0 ∧ 0 ≤ k ∧ OutputsSound G s t k st.trace)
+    (fun T => ∀ p ∈ outputs T, G.BoundedPath k s t p) ⟨rfl, ⟨rfl, by simp, by simpa using Ne.symm hst, by simp⟩, rfl, Nat.zero_le k, by simp [OutputsSound]⟩ ?_
+  refine (StateM.triple_iff _ _ _).mpr fun st hpre => ?_
+  simpa [OutputsSound] using ((StateM.triple_iff _ _ _).mp (search_sound G s t k 0 s #[]) st hpre).2

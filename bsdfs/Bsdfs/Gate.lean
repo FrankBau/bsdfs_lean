@@ -89,14 +89,10 @@ end lists
 section succ
 variable (c : Nat)
 
-theorem gateSucc_s : gateSucc c (gS c) = [gQ c, gG c] := by simp [gateSucc, gS]
-theorem gateSucc_q : gateSucc c (gQ c) = gT c :: gG c :: gBlk c := by simp [gateSucc, gQ]
-theorem gateSucc_t : gateSucc c (gT c) = [] := by simp [gateSucc, gT]
-theorem gateSucc_g : gateSucc c (gG c) = (gBlk c).take 1 ++ [gQ c, gS c] := by simp [gateSucc, gG]
-theorem gate_succ_s : (gate c).succ (gS c) = [gQ c, gG c] := gateSucc_s c
-theorem gate_succ_q : (gate c).succ (gQ c) = gT c :: gG c :: gBlk c := gateSucc_q c
-theorem gate_succ_t : (gate c).succ (gT c) = [] := gateSucc_t c
-theorem gate_succ_g : (gate c).succ (gG c) = (gBlk c).take 1 ++ [gQ c, gS c] := gateSucc_g c
+theorem gate_succ_s : (gate c).succ (gS c) = [gQ c, gG c] := by simp [gate, gateSucc, gS]
+theorem gate_succ_q : (gate c).succ (gQ c) = gT c :: gG c :: gBlk c := by simp [gate, gateSucc, gQ]
+theorem gate_succ_t : (gate c).succ (gT c) = [] := by simp [gate, gateSucc, gT]
+theorem gate_succ_g : (gate c).succ (gG c) = (gBlk c).take 1 ++ [gQ c, gS c] := by simp [gate, gateSucc, gG]
 
 theorem gS_ne_gQ : gS c ≠ gQ c := by simp [gS, gQ, Fin.ext_iff]
 theorem gS_ne_gG : gS c ≠ gG c := by simp [gS, gG, Fin.ext_iff]
@@ -115,36 +111,36 @@ end succ
 section pred
 variable (c : Nat)
 
-theorem gate_pred_eq (v : Fin (c + 4)) : (gate c).pred v = ([gS c, gQ c, gT c, gG c] ++ gBlk c).filter (fun u => v ∈ gateSucc c u) := by
-  simp only [gate, gatePred]; rw [finRange_gate]
-
-theorem gateSucc_B (i : Nat) (hi : i < (gBlk c).length) : gateSucc c (gBlk c)[i] = (gBlk c).take i ++ (gBlk c).drop (i + 1) ++ [gG c] :=
-  gate_succ_B c i hi
+theorem gate_pred_eq (v : Fin (c + 4)) : (gate c).pred v = ([gS c, gQ c, gT c, gG c] ++ gBlk c).filter (fun u => v ∈ (gate c).succ u) := by
+  show gatePred c v = _
+  unfold gatePred
+  rw [finRange_gate]
+  rfl
 
 theorem gate_pred_q : (gate c).pred (gQ c) = [gS c, gG c] := by
   rw [gate_pred_eq, List.filter_append]
-  have h1 : (gBlk c).filter (fun u => decide (gQ c ∈ gateSucc c u)) = [] := by
+  have h1 : (gBlk c).filter (fun u => decide (gQ c ∈ (gate c).succ u)) = [] := by
     rw [List.filter_eq_nil_iff]
     intro u hu
     obtain ⟨i, hi, rfl⟩ := List.mem_iff_getElem.mp hu
-    rw [gateSucc_B c i hi]
+    rw [gate_succ_B c i hi]
     simp only [List.mem_append, List.mem_singleton, decide_eq_true_eq, not_or]
     exact ⟨⟨fun h => gQ_not_blk c (List.mem_of_mem_take h), fun h => gQ_not_blk c (List.mem_of_mem_drop h)⟩, by simp [gQ, gG, Fin.ext_iff]⟩
   rw [h1]
   have hgq : gQ c ∉ (gBlk c).take 1 := fun h => gQ_not_blk c (List.mem_of_mem_take h)
-  simp [gateSucc_s, gateSucc_q, gateSucc_t, gateSucc_g, gQ_ne_gT c, gQ_ne_gG c, (gS_ne_gQ c).symm, gQ_not_blk c, hgq]
+  simp [gate_succ_s, gate_succ_q, gate_succ_t, gate_succ_g, gQ_ne_gT c, gQ_ne_gG c, (gS_ne_gQ c).symm, gQ_not_blk c, hgq]
 
 theorem gate_pred_g : (gate c).pred (gG c) = [gS c, gQ c] ++ gBlk c := by
   rw [gate_pred_eq, List.filter_append]
-  have h1 : (gBlk c).filter (fun u => decide (gG c ∈ gateSucc c u)) = gBlk c := by
+  have h1 : (gBlk c).filter (fun u => decide (gG c ∈ (gate c).succ u)) = gBlk c := by
     rw [List.filter_eq_self]
     intro u hu
     obtain ⟨i, hi, rfl⟩ := List.mem_iff_getElem.mp hu
-    rw [gateSucc_B c i hi]
+    rw [gate_succ_B c i hi]
     simp
   rw [h1]
   have hg : gG c ∉ (gBlk c).take 1 := fun h => gG_not_blk c (List.mem_of_mem_take h)
-  simp [gateSucc_s, gateSucc_q, gateSucc_t, gateSucc_g, (gT_ne_gG c).symm, (gQ_ne_gG c).symm, (gS_ne_gG c).symm, hg]
+  simp [gate_succ_s, gate_succ_q, gate_succ_t, gate_succ_g, (gT_ne_gG c).symm, (gQ_ne_gG c).symm, (gS_ne_gG c).symm, hg]
 
 theorem gate_pred_B_mem (j : Nat) (hj : j < (gBlk c).length) (u : Fin (c + 4)) (hu : u ∈ (gate c).pred (gBlk c)[j]) : u = gQ c ∨ u = gG c ∨ u ∈ gBlk c := by
   rw [gate_pred_eq, List.mem_filter] at hu
@@ -152,14 +148,14 @@ theorem gate_pred_B_mem (j : Nat) (hj : j < (gBlk c).length) (u : Fin (c + 4)) (
   simp only [List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hu1
   rcases hu1 with (rfl | rfl | rfl | rfl) | hu1
   · exfalso
-    rw [gateSucc_s] at hu2
+    rw [gate_succ_s] at hu2
     simp only [decide_eq_true_eq, List.mem_cons, List.not_mem_nil, or_false] at hu2
     rcases hu2 with h | h
-    · exact gQ_not_blk c (h ▸ List.getElem_mem _)
-    · exact gG_not_blk c (h ▸ List.getElem_mem _)
+    · exact getElem_ne_of_not_mem (gQ_not_blk c) _ _ h
+    · exact getElem_ne_of_not_mem (gG_not_blk c) _ _ h
   · exact Or.inl rfl
   · exfalso
-    rw [gateSucc_t] at hu2
+    rw [gate_succ_t] at hu2
     simp at hu2
   · exact Or.inr (Or.inl rfl)
   · exact Or.inr (Or.inr hu1)
@@ -174,31 +170,31 @@ theorem sum_map_const {α : Type} (l : List α) (f : α → Nat) (m : Nat) (h : 
 
 theorem gate_pred_B_length (j : Nat) (hj : j < (gBlk c).length) : ((gate c).pred (gBlk c)[j]).length = c + (if j = 0 then 1 else 0) := by
   rw [gate_pred_eq, List.filter_append, List.length_append]
-  have h1 : (gBlk c).filter (fun u => decide ((gBlk c)[j] ∈ gateSucc c u)) = (gBlk c).filter (fun u => decide (u ≠ (gBlk c)[j])) := by
+  have h1 : (gBlk c).filter (fun u => decide ((gBlk c)[j] ∈ (gate c).succ u)) = (gBlk c).filter (fun u => decide (u ≠ (gBlk c)[j])) := by
     apply List.filter_congr
     intro u hu
     obtain ⟨i, hi, rfl⟩ := List.mem_iff_getElem.mp hu
-    rw [gateSucc_B c i hi]
+    rw [gate_succ_B c i hi]
     simp only [List.mem_append, List.mem_singleton, decide_eq_decide]
     rw [(gBlk_nodup c).getElem_mem_take hj, (gBlk_nodup c).getElem_mem_drop hj, ne_eq, (gBlk_nodup c).getElem_inj]
     constructor
     · rintro ((h | h) | h)
       · omega
       · omega
-      · exact absurd h (fun h' => gG_not_blk c (h' ▸ List.getElem_mem _))
+      · exact absurd h (getElem_ne_of_not_mem (gG_not_blk c) _ _)
     · intro h
       left
       omega
   rw [h1, (gBlk_nodup c).filter_ne_getElem hj]
   have hv := gBlk_val c j hj
-  have h4 : ([gS c, gQ c, gT c, gG c].filter fun u => decide ((gBlk c)[j] ∈ gateSucc c u)).length = 1 + (if j = 0 then 1 else 0) := by
-    have hq : (gBlk c)[j] ∈ gateSucc c (gQ c) := by rw [gateSucc_q]; simp
-    have hs : (gBlk c)[j] ∉ gateSucc c (gS c) := by
-      rw [gateSucc_s]; simp only [List.mem_cons, List.not_mem_nil, or_false, not_or]
-      exact ⟨fun h => gQ_not_blk c (h ▸ List.getElem_mem _), fun h => gG_not_blk c (h ▸ List.getElem_mem _)⟩
-    have ht : (gBlk c)[j] ∉ gateSucc c (gT c) := by rw [gateSucc_t]; simp
-    have hg : (gBlk c)[j] ∈ gateSucc c (gG c) ↔ j = 0 := by
-      rw [gateSucc_g]
+  have h4 : ([gS c, gQ c, gT c, gG c].filter fun u => decide ((gBlk c)[j] ∈ (gate c).succ u)).length = 1 + (if j = 0 then 1 else 0) := by
+    have hq : (gBlk c)[j] ∈ (gate c).succ (gQ c) := by rw [gate_succ_q]; simp
+    have hs : (gBlk c)[j] ∉ (gate c).succ (gS c) := by
+      rw [gate_succ_s]; simp only [List.mem_cons, List.not_mem_nil, or_false, not_or]
+      exact ⟨getElem_ne_of_not_mem (gQ_not_blk c) _ _, getElem_ne_of_not_mem (gG_not_blk c) _ _⟩
+    have ht : (gBlk c)[j] ∉ (gate c).succ (gT c) := by rw [gate_succ_t]; simp
+    have hg : (gBlk c)[j] ∈ (gate c).succ (gG c) ↔ j = 0 := by
+      rw [gate_succ_g]
       simp only [List.mem_append, List.mem_cons, List.not_mem_nil, or_false]
       rw [(gBlk_nodup c).getElem_mem_take hj]
       constructor
@@ -212,7 +208,7 @@ theorem gate_pred_B_length (j : Nat) (hj : j < (gBlk c).length) : ((gate c).pred
     · subst hj0
       have := hg.mpr rfl
       simp [this]
-    · simp [show ¬ (gBlk c)[j] ∈ gateSucc c (gG c) from fun h => hj0 (hg.mp h), hj0]
+    · simp [show ¬ (gBlk c)[j] ∈ (gate c).succ (gG c) from fun h => hj0 (hg.mp h), hj0]
   rw [h4]
   simp [gBlk_length]
   omega
