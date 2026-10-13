@@ -19,6 +19,24 @@ import Bsdfs
 #guard_msgs in
 #print axioms bsdfs_amortized_delay
 
+-- lower bounds: the gate trap (interval 1 exactly, tightness of both delay bounds) and the clique trap
+
+/-- info: 'gate_interval1' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms gate_interval1
+
+/-- info: 'worst_case_ratio' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms worst_case_ratio
+
+/-- info: 'amortized_ratio' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms amortized_ratio
+
+/-- info: 'clique_amortized_lower' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms clique_amortized_lower
+
 
 /-! Smoke-test driver: reads cases.txt, prints the trace of `bsdfs` per case in Python repr format
     (nodes as indices), for a plain `diff` against bsdfs_traced.py. -/
