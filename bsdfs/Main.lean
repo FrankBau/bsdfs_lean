@@ -1,5 +1,8 @@
 import Bsdfs
 
+
+-- The following statements assert that the proofs of the main claims rely only on the standard axioms
+
 /-- info: 'bsdfs_sound' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms bsdfs_sound
