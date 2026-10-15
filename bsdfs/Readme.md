@@ -26,6 +26,7 @@
   - `#print axioms` of `gate_interval1`, `worst_case_ratio`, `amortized_ratio`, `clique_amortized_lower`: `propext`, `Classical.choice`, `Quot.sound`, checked by `#guard_msgs` in `Main.lean`.
   - Not formalized: interval 2 of Γ_c. With the early exit at s it is n + m + c − 2 = c² + 3c + 9 (gate_family.tex has n + m + c, written before the early exit); observed with the executable (`#eval`, c = 1 .. 6, k = 6 .. 10), not proved.
 - No `sorry` left in the project (`lake build`: no warnings).
+- All main statements in one place: `Bsdfs/MainTheorems.lean` (namespace `BSDFS`), each a verbatim copy proved by the internal theorem, with `#guard_msgs` axiom checks. `lake env leanchecker --fresh Bsdfs.MainTheorems` replays the whole environment through the kernel (passes, about 50 s); CI (`.github/workflows/` at the repository root) runs the build and this check.
 - Restated 2026-10-12. Checked on the 1203 smoke traces: largest ratios 0.67 (worst case) and 0.44 (amortized) of the bounds, in path and cycle mode. Paper source with the Section 6 proofs: `OneDrive/2026-06 path finding_JGAA/paper_JGAA_v2/bsdfs.tex`; v3 lemmas in `edge_budget/edge_budget.tex`, `visits.md`, `summary_2k_and_k.md`.
 
 ## `bsdfs_sound`: how it went (Claude Code session, 2026-10-12)

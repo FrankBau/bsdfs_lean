@@ -22,3 +22,4 @@ import Bsdfs.GateRun
 import Bsdfs.Gate
 import Bsdfs.Clique
 import Bsdfs.Tightness
+import Bsdfs.MainTheorems
