@@ -1,3 +1,6 @@
+/-
+Copyright (c) 2026 Frank Bauernöppel. Released under the MIT license as described in the file LICENSE.
+-/
 import Bsdfs.Clique
 import Bsdfs.WorstCase
 import Bsdfs.Amortized

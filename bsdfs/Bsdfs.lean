@@ -1,3 +1,6 @@
+/-
+Copyright (c) 2026 Frank Bauernöppel. Released under the MIT license as described in the file LICENSE.
+-/
 -- This module serves as the root of the `Bsdfs` library.
 -- Import modules here that should be built as part of the library.
 import Bsdfs.BsdfsExec

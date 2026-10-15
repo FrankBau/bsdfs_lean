@@ -1,4 +1,7 @@
 /-
+Copyright (c) 2026 Frank Bauernöppel. Released under the MIT license as described in the file LICENSE.
+-/
+/-
   BS-DFS (tight scheme) as an executable, tick-instrumented Lean 4 function.
 
   Line-by-line transcription of bsdfs_traced.py (Algorithms 1-3 of bsdfs.tex): same cost model,
