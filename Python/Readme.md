@@ -11,7 +11,7 @@ driver, which creates many `(G, s, t, k)` instances, dumps them in a machine rea
 to file  `cases.txt`, executes `bsdfs_traced(G, s, t, k)` on them, and collects all traces
 in file `expected.txt`. 
 
-Then, it builds and executes `bsdfs/Main.lean` which reads `cases.txt`, executes bsdfs 
+Then, it builds and executes `Main.lean` which reads `cases.txt`, executes bsdfs 
 (in `BsdfsExec.lean`) on them and compares the output against the traces expected.
 
 Expected output:
@@ -23,4 +23,4 @@ Build completed successfully (51 jobs).
 smoke test passed: traces identical
 ```
 
-The trace event type (Ev) is defined in `bsdfs\Bsdfs\BsdfsExec.lean`.
+The trace event type (Ev) is defined in `Bsdfs/BsdfsExec.lean`.

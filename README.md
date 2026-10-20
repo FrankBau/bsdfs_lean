@@ -1,4 +1,4 @@
-# bsdfs Folder
+# Lean Package
 
 Lean4 code for the Bounded-Scope Depth-First Search (BS-DFS) path enumeration algorithm
 in graphs, with proofs of its main properties and theorems:
@@ -12,10 +12,9 @@ in graphs, with proofs of its main properties and theorems:
   no factor below 2 works in 2k(n+m), none below 1 in τ(k+2)(n+m); on the clique traps G_c the
   first observable event after the start takes at least (k−1)(n+m) steps.
 
-Check for yourself that all claims hold:
+Check for yourself that all claims hold, in the repository root:
 
 ```bash
-cd bsdfs
 lake clean                                         # prepare a clean build
 lake build                                         # checks all proofs; fails if a main theorem uses sorry or a non-standard axiom
 lake env leanchecker --fresh Bsdfs.MainTheorems    # replays everything again through the Lean kernel, from scratch (about 50 s)
@@ -33,7 +32,7 @@ and by using only minimal human guidance.
 The [Lean Core](https://lean-lang.org/) **version 4.34.1** with the
 [Lean 4 Visual Studio Code extension](https://marketplace.visualstudio.com/items?itemName=leanprover.lean4)
 were used for automated proof-checking; no additional libraries.
-Details about the code and usage are in the [Readme.md](bsdfs/Readme.md).
+Details about the code and usage are in [NOTES.md](NOTES.md).
 
 
 # Python Folder
@@ -53,7 +52,7 @@ Expect breaking changes with newer versions of lean.
 
 # The Current State (by Claude)
 
-- **Verified:** the four theorems `bsdfs_sound`, `bsdfs_complete_once`, `bsdfs_worst_case_delay` and `bsdfs_amortized_delay`, and the lower bounds: `gate_interval1` (the interval (o_1, o_2] of Γ_c, exactly), `worst_case_ratio`, `amortized_ratio` and `clique_amortized_lower`. They have no `sorry` and use only the standard axioms. The Lean kernel checks the final proof terms, so `mvcgen` being experimental doesn't affect trust. What you have to read and trust is the ~150 lines of definitions in `BsdfsExec.lean`: `Graph`, `bsdfs`, `outputs`, `obsSteps`, `BoundedPath`, `Graph.m`; for the lower bounds also the graphs in `Gate.lean` and `Clique.lean` and the definitions `sweepCalls` and `gateD1` used in their statements. All main statements are collected in `bsdfs/Bsdfs/MainTheorems.lean`, each with its axiom check; CI builds the project and replays these theorems through the kernel with `leanchecker --fresh`.
+- **Verified:** the four theorems `bsdfs_sound`, `bsdfs_complete_once`, `bsdfs_worst_case_delay` and `bsdfs_amortized_delay`, and the lower bounds: `gate_interval1` (the interval (o_1, o_2] of Γ_c, exactly), `worst_case_ratio`, `amortized_ratio` and `clique_amortized_lower`. They have no `sorry` and use only the standard axioms. The Lean kernel checks the final proof terms, so `mvcgen` being experimental doesn't affect trust. What you have to read and trust is the ~150 lines of definitions in `BsdfsExec.lean`: `Graph`, `bsdfs`, `outputs`, `obsSteps`, `BoundedPath`, `Graph.m`; for the lower bounds also the graphs in `Gate.lean` and `Clique.lean` and the definitions `sweepCalls` and `gateD1` used in their statements. All main statements are collected in `Bsdfs/MainTheorems.lean`, each with its axiom check; CI builds the project and replays these theorems through the kernel with `leanchecker --fresh`.
 - **Path mode only:** all theorems assume s ≠ t. Cycle mode (s = t) is in the paper's title and in the smoke test (200 instances), but no theorem covers it yet.
 - **The verified object is the Lean transcription:** its agreement with `bsdfs_traced.py`, the paper's pseudocode and the C code is tested on the 1203 smoke instances, not proved.
 - **The delay bounds count the step counter:** that is the paper's cost model, with stack membership as an O(1) step. The Lean executable actually checks membership by a linear scan, so the theorems say nothing about the Lean program's own running time.
@@ -62,4 +61,4 @@ Expect breaking changes with newer versions of lean.
   - the refinements in `visits.md` and `edge_budget.tex` (2k−2j−1 per inner interval, the terminal k+2, locality, bounded degree);
   - the paper's lemmas in their original spine/fork wording. The Lean proofs use stack-model versions; they match the paper by construction, but that match isn't proved.
 
-So it's fair to say the four main claims, and the tightness of both delay bounds, are machine-checked for path mode, on the Lean model of the algorithm. A map from the paper's lemmas to their Lean names is at the end of `bsdfs/Readme.md`.
+So it's fair to say the four main claims, and the tightness of both delay bounds, are machine-checked for path mode, on the Lean model of the algorithm. A map from the paper's lemmas to their Lean names is at the end of `NOTES.md`.

@@ -4,7 +4,7 @@ Observable events: o_0 = start, o_1 … o_T = the outputs, o_{T+1} = term. The t
 - `bsdfs_worst_case_delay` (WorstCase): o_τ and o_{τ+1} are at most 2k(n + m) steps apart.
 - `bsdfs_amortized_delay` (Amortized): o_τ happens after at most τ(k + 2)(n + m) steps.
 
-Paper names are in *italics*. Every Lean name below carries the paper's label in its docstring; the table at the end of Readme.md lists them all.
+Paper names are in *italics*. Every Lean name below carries the paper's label in its docstring; the table at the end of NOTES.md lists them all.
 
 ## One interval
 

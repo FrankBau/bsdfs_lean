@@ -13,8 +13,6 @@ jobs:
       - uses: actions/checkout@v5
       - uses: leanprover/lean-action@v1
         with:
-          # the Lake package lives in bsdfs/, not at the repository root
-          lake-package-directory: bsdfs
           # replay the whole environment of the main theorems through the kernel, from scratch
           leanchecker: "true"
           leanchecker-args: "--fresh Bsdfs.MainTheorems"

@@ -7,6 +7,7 @@
 - Run: `lean -o build/BsdfsExec.olean BsdfsExec.lean`, `python3 smoke_gen.py`, `LEAN_PATH=build lean --run BsdfsSmoke.lean cases.txt > got.txt`, compare with `expected.txt`.
 - Moved into the lake project `lean/bsdfs` (Claude Code session, 2026-10-12): library `Bsdfs` = `Bsdfs/BsdfsExec.lean`; the smoke driver is now `Main.lean` (exe `bsdfs`). Run (test files live in `lean/`, see README.md): `python smoke_gen.py` in `lean/` (writes `cases.txt`, `expected.txt` into the current directory); in `lean/bsdfs`: `lake build`, `lake exe bsdfs ../cases.txt > ../lean_out.txt`, then `fc ..\expected.txt ..\lean_out.txt` or `diff --strip-trailing-cr` (Python on Windows writes CRLF). Re-checked there: identical on all 1203 instances.
 - Early exit at s (Claude Code session, 2026-10-12): `if sd <= k and h > 0:` in `lean/bsdfs_traced.py`, `if sd ≤ k ∧ h > 0 then` in `BsdfsExec.lean`. Regenerated smoke test: 1203 instances, 423,311 events (was 424,913), 63,611 outputs (unchanged), traces identical.
+- Moved to the repository root (Claude Code session, 2026-10-20): the Lake package was `bsdfs/` in the repository bsdfs_lean and is now its root, because Reservoir needs `lake-manifest.json` at the top level. This file was `bsdfs/Readme.md`; `docbuild/` now pins Lean 4.34.1 and doc-gen4 v4.34.1, like the package.
 
 ## Deviations from the Python code (all deliberate)
 1. Depth `h` is an explicit argument of `search`; `termination_by k - h`, proved automatically from the guard `b[w] + h < k` (hence h < k).
