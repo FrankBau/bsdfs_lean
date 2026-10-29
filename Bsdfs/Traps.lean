@@ -5,7 +5,7 @@ import Bsdfs.BsdfsExec
 
 /-!
   The example graphs of the lower bounds and the counts in their statements, definitions only.  Together with
-  `Bsdfs/BsdfsExec.lean` this is everything the statements in `Bsdfs/Challenge.lean` refer to.  The facts about these
+  `Bsdfs/BsdfsExec.lean` and `Bsdfs/Positions.lean` this is everything the statements in `Bsdfs/Challenge.lean` refer to.  The facts about these
   definitions are proved in `Bsdfs/Sweep.lean`, `Bsdfs/GateRun.lean`, `Bsdfs/Gate.lean`, `Bsdfs/Clique.lean` and
   `Bsdfs/Tightness.lean`.
 -/

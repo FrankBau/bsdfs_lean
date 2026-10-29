@@ -18,16 +18,8 @@ open Trace
 
 variable {n : Nat}
 
-/-- an observable event (start, output, term) at q -/
-def Trace.isObs (tr : List (Ev n)) (q : Nat) : Bool := match tr[q]? with | some e => e.obs.isSome | none => false
-
-/-- a and c are consecutive observable events -/
-structure Consec (tr : List (Ev n)) (a c : Nat) : Prop where
-  lt : a < c
-  bound : c < tr.length
-  obs_a : isObs tr a = true
-  obs_c : isObs tr c = true
-  between : ∀ q, a < q → q < c → isObs tr q = false
+-- `Trace.isObs tr q` (an observable event at q) and `Consec tr a c` (a and c are consecutive observable events) are defined
+-- in Bsdfs/Positions.lean
 
 /-- m is the least stack size on (a, c], first reached right after β -/
 structure Shape (tr : List (Ev n)) (a c m β : Nat) : Prop where
@@ -198,8 +190,7 @@ theorem depth_asc {q σ z h} (h1 : β < q) (h2 : q ≤ c) (he : tr[q]? = some (.
   have := hS.min q (by have := hS.le; omega) h2
   omega
 
-/-- entry depth, read off the event -/
-def depthOf (tr : List (Ev n)) (q : Nat) : Nat := match tr[q]? with | some (.enter _ _ h) => h | _ => 0
+-- `Trace.depthOf tr q`, the entry depth read off the event at q, is defined in Bsdfs/Positions.lean
 
 omit hF hC hS in
 theorem depthOf_enter {q σ z h} (he : tr[q]? = some (.enter σ z h)) : depthOf tr q = h := by

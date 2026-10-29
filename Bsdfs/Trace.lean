@@ -13,14 +13,8 @@ variable {n : Nat}
 namespace Trace
 variable (tr : List (Ev n))
 
-/-- the stack before position p: enter pushes, exit pops -/
-def stk : Nat → List (Fin n)
-  | 0 => []
-  | p + 1 =>
-    match tr[p]? with
-    | some (.enter _ v _) => stk p ++ [v]
-    | some (.exit ..) => (stk p).dropLast
-    | _ => stk p
+-- `stk tr p`, the stack before position p, and `cnt P lo hi`, the number of positions q with lo < q ≤ hi and P q, are defined
+-- in Bsdfs/Positions.lean
 
 /-- the barrier of z before position p -/
 def bar : Nat → Fin n → Nat
@@ -34,10 +28,6 @@ def bar : Nat → Fin n → Nat
 def Frame (e x : Nat) : Prop :=
   e < x ∧ (∃ σ v h, tr[e]? = some (.enter σ v h)) ∧ (∃ σ v h sd f, tr[x]? = some (.exit σ v h sd f)) ∧
     (stk tr (x + 1)).length = (stk tr e).length ∧ ∀ q, e < q → q ≤ x → (stk tr e).length < (stk tr q).length
-
-/-- number of positions q with lo < q ≤ hi and P q -/
-def cnt (P : Nat → Prop) [DecidablePred P] (lo hi : Nat) : Nat :=
-  (List.range' (lo + 1) (hi - lo)).countP (fun q => decide (P q))
 
 end Trace
 
@@ -104,9 +94,8 @@ end lemmas
 namespace Trace
 variable (tr : List (Ev n))
 
+-- `enterAt` and `deqAt` are defined in Bsdfs/Positions.lean
 /-- events at position q, as Booleans for counting -/
-def enterAt (z : Fin n) (q : Nat) : Bool := match tr[q]? with | some (.enter _ v _) => v == z | _ => false
-def deqAt (z : Fin n) (q : Nat) : Bool := match tr[q]? with | some (.dequeue _ v _) => v == z | _ => false
 def dropAt (z : Fin n) (q : Nat) : Bool := match tr[q]? with | some (.write _ x _ _ .drop) => x == z | _ => false
 def fruitAt (z : Fin n) (q : Nat) : Bool := match tr[q]? with | some (.write _ x _ _ .fruitful) => x == z | _ => false
 

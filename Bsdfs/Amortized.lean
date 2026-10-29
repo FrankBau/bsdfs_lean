@@ -458,7 +458,7 @@ theorem period_split {θ : Nat} {y : Fin n} (hθ1 : a < θ) (hθ2 : θ ≤ β) (
 
 open Classical in
 /-- the calls at z entered in the period and not open at a have pairwise distinct depths -/
-theorem nR_depth_inj (z : Fin n) : ∀ q₁ q₂, β' < q₁ → q₁ ≤ β → β' < q₂ → q₂ ≤ β → (enterAt tr z q₁ = true ∧ ¬ openAt tr a q₁) → (enterAt tr z q₂ = true ∧ ¬ openAt tr a q₂) → DelayFacts.depthOf tr q₁ = DelayFacts.depthOf tr q₂ → q₁ = q₂ := by
+theorem nR_depth_inj (z : Fin n) : ∀ q₁ q₂, β' < q₁ → q₁ ≤ β → β' < q₂ → q₂ ≤ β → (enterAt tr z q₁ = true ∧ ¬ openAt tr a q₁) → (enterAt tr z q₂ = true ∧ ¬ openAt tr a q₂) → depthOf tr q₁ = depthOf tr q₂ → q₁ = q₂ := by
   intro q₁ q₂ a1 b1 a2 b2 ⟨hq1, hno1⟩ ⟨hq2, hno2⟩ hdep
   obtain ⟨σ₁, h₁, he₁⟩ := Trace.enterAt_iff.mp hq1
   obtain ⟨σ₂, h₂, he₂⟩ := Trace.enterAt_iff.mp hq2
@@ -477,14 +477,14 @@ theorem nR_le (u : Fin n) : cnt (fun q => enterAt tr u q = true ∧ ¬ openAt tr
       cnt (fun q => enterAt tr u q = true ∧ ¬ openAt tr a q) β' β ≤ k + 1 - (stk tr θ).length := by
   have hR := hA.toRunFacts
   refine ⟨?_, ?_⟩
-  · have := Trace.cnt_le_of_depth (fun q => enterAt tr u q = true ∧ ¬ openAt tr a q) (DelayFacts.depthOf tr) (lo := β') (hi := β) (A := 1) (B := k) ?_ (hA.nR_depth_inj hC' hC hS' hS u)
+  · have := Trace.cnt_le_of_depth (fun q => enterAt tr u q = true ∧ ¬ openAt tr a q) (depthOf tr) (lo := β') (hi := β) (A := 1) (B := k) ?_ (hA.nR_depth_inj hC' hC hS' hS u)
     · omega
     · intro q h1 h2 ⟨hq, hno⟩
       obtain ⟨σ, h, he⟩ := Trace.enterAt_iff.mp hq
       rw [DelayFacts.depthOf_enter he]
       exact ⟨hA.nR_depth_pos hC' hC h1 h2 he hno, by have := (hR.enter q σ u h he).2.2.2.1; omega⟩
   · intro θ y hθ1 hθ2 hd hfirst hu
-    apply Trace.cnt_le_of_depth (fun q => enterAt tr u q = true ∧ ¬ openAt tr a q) (DelayFacts.depthOf tr) (A := (stk tr θ).length) (B := k) _ (hA.nR_depth_inj hC' hC hS' hS u)
+    apply Trace.cnt_le_of_depth (fun q => enterAt tr u q = true ∧ ¬ openAt tr a q) (depthOf tr) (A := (stk tr θ).length) (B := k) _ (hA.nR_depth_inj hC' hC hS' hS u)
     intro q h1 h2 ⟨hq, hno⟩
     obtain ⟨σ, h, he⟩ := Trace.enterAt_iff.mp hq
     rw [DelayFacts.depthOf_enter he]

@@ -9,7 +9,7 @@ import Bsdfs.Tightness
   `Quot.sound` (in particular on `sorryAx`).
 
   To trust these theorems, read `Bsdfs/Challenge.lean`, which states them with the same names and `sorry`, and the definitions
-  it uses, in `Bsdfs/BsdfsExec.lean` and `Bsdfs/Traps.lean`; `comparator.json` lets the comparator tool check that the
+  it uses, in `Bsdfs/BsdfsExec.lean`, `Bsdfs/Positions.lean` and `Bsdfs/Traps.lean`; `comparator.json` lets the comparator tool check that the
   statements here and there match.
 
   Everything else in the library is proof, checked by Lean.
@@ -36,6 +36,20 @@ theorem worst_case_delay {n : Nat} (G : Graph n) (s t : Fin n) (k : Nat) (hG : G
 theorem amortized_delay {n : Nat} (G : Graph n) (s t : Fin n) (k : Nat) (hG : G.WF) (hst : s ≠ t) :
     ∀ τ (hτ : τ < (obsSteps (bsdfs G s t k)).length), (obsSteps (bsdfs G s t k))[τ] ≤ τ * (k + 2) * (n + G.m) :=
   bsdfs_amortized_delay G s t k hG hst
+
+/-! ## Per interval (path mode, s ≠ t): between consecutive observable events a < c -/
+
+/-- Two Entries per Pair: in (a, c], every node z is entered at most twice at the same depth h -/
+theorem two_entries {n : Nat} (G : Graph n) (s t : Fin n) (k : Nat) (hG : G.WF) (hst : s ≠ t) {a c : Nat} (hC : Consec (bsdfs G s t k) a c) (z : Fin n) (h : Nat) :
+    Trace.cnt (fun q => Trace.enterAt (bsdfs G s t k) z q = true ∧ Trace.depthOf (bsdfs G s t k) q = h) a c ≤ 2 :=
+  bsdfs_two_entries G s t k hG hst hC z h
+
+/-- Edge Scans: for every edge (x, y), the calls at x entered in (a, c], the dequeues of y in (a, c] and the frame of x open at
+    a are at most 2k together.  These are what scans (x, y), forward and backward; that they bound the scans executed in the
+    interval is the paper's argument, not checked here (the trace has no scan events). -/
+theorem edge_scans {n : Nat} (G : Graph n) (s t : Fin n) (k : Nat) (hG : G.WF) (hst : s ≠ t) (hk : 0 < k) {a c : Nat} (hC : Consec (bsdfs G s t k) a c) {x y : Fin n} (hxy : y ∈ G.succ x) :
+    Trace.cnt (fun q => Trace.enterAt (bsdfs G s t k) x q = true) a c + Trace.cnt (fun q => Trace.deqAt (bsdfs G s t k) y q = true) a c + (if x ∈ Trace.stk (bsdfs G s t k) a then 1 else 0) ≤ 2 * k :=
+  bsdfs_edge_scans G s t k hG hst hk hC hxy
 
 /-! ## The gate trap Γ_c -/
 
@@ -108,6 +122,14 @@ end BSDFS
 /-- info: 'BSDFS.amortized_delay' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms BSDFS.amortized_delay
+
+/-- info: 'BSDFS.two_entries' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms BSDFS.two_entries
+
+/-- info: 'BSDFS.edge_scans' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms BSDFS.edge_scans
 
 /-- info: 'BSDFS.gate_valid' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in

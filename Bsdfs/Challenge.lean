@@ -2,12 +2,15 @@
 Copyright (c) 2026 Frank Bauernöppel. Released under the MIT license as described in the file LICENSE.
 -/
 import Bsdfs.BsdfsExec
+import Bsdfs.Positions
 import Bsdfs.Traps
 
 /-!
-  The main theorems, stated with `sorry` in place of their proofs.  This file and its two imports are all you have to read:
+  The main theorems, stated with `sorry` in place of their proofs.  This file and its three imports are all you have to read:
   - `Bsdfs/BsdfsExec.lean`: `Graph`, `Graph.WF`, `Graph.m`, `bsdfs` (with `search`, `fruitful` and the step counter),
     `outputs`, `obsSteps`, `Graph.BoundedPath`;
+  - `Bsdfs/Positions.lean`, for the per-interval theorems: reading the trace by position, `Consec` (consecutive observable
+    events), `Trace.cnt`, `Trace.enterAt`, `Trace.deqAt`, `Trace.stk` and `Trace.depthOf`;
   - `Bsdfs/Traps.lean`: the example graphs of the lower bounds, `gate`, `gS`, `gT` and `clique`, `cS`, `cT`, and the counts
     `sweepCalls` and `gateD1`.
 
@@ -37,6 +40,20 @@ theorem worst_case_delay {n : Nat} (G : Graph n) (s t : Fin n) (k : Nat) (hG : G
 /-- amortized delay: the τ-th observable event happens after at most τ(k + 2)(n + m) steps -/
 theorem amortized_delay {n : Nat} (G : Graph n) (s t : Fin n) (k : Nat) (hG : G.WF) (hst : s ≠ t) :
     ∀ τ (hτ : τ < (obsSteps (bsdfs G s t k)).length), (obsSteps (bsdfs G s t k))[τ] ≤ τ * (k + 2) * (n + G.m) :=
+  sorry
+
+/-! ## Per interval (path mode, s ≠ t): between consecutive observable events a < c -/
+
+/-- Two Entries per Pair: in (a, c], every node z is entered at most twice at the same depth h -/
+theorem two_entries {n : Nat} (G : Graph n) (s t : Fin n) (k : Nat) (hG : G.WF) (hst : s ≠ t) {a c : Nat} (hC : Consec (bsdfs G s t k) a c) (z : Fin n) (h : Nat) :
+    Trace.cnt (fun q => Trace.enterAt (bsdfs G s t k) z q = true ∧ Trace.depthOf (bsdfs G s t k) q = h) a c ≤ 2 :=
+  sorry
+
+/-- Edge Scans: for every edge (x, y), the calls at x entered in (a, c], the dequeues of y in (a, c] and the frame of x open at
+    a are at most 2k together.  These are what scans (x, y), forward and backward; that they bound the scans executed in the
+    interval is the paper's argument, not checked here (the trace has no scan events). -/
+theorem edge_scans {n : Nat} (G : Graph n) (s t : Fin n) (k : Nat) (hG : G.WF) (hst : s ≠ t) (hk : 0 < k) {a c : Nat} (hC : Consec (bsdfs G s t k) a c) {x y : Fin n} (hxy : y ∈ G.succ x) :
+    Trace.cnt (fun q => Trace.enterAt (bsdfs G s t k) x q = true) a c + Trace.cnt (fun q => Trace.deqAt (bsdfs G s t k) y q = true) a c + (if x ∈ Trace.stk (bsdfs G s t k) a then 1 else 0) ≤ 2 * k :=
   sorry
 
 /-! ## The gate trap Γ_c -/

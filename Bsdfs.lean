@@ -5,6 +5,7 @@ Copyright (c) 2026 Frank Bauernöppel. Released under the MIT license as describ
 -- Import modules here that should be built as part of the library.
 import Bsdfs.BsdfsExec
 import Bsdfs.Traps
+import Bsdfs.Positions
 import Bsdfs.Basic
 import Bsdfs.Sound
 import Bsdfs.Complete

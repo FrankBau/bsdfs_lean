@@ -2,6 +2,7 @@
 Copyright (c) 2026 Frank Bauernöppel. Released under the MIT license as described in the file LICENSE.
 -/
 import Bsdfs.Basic
+import Bsdfs.Positions
 
 /-!
   Attribution of Work (sec:work-attribution) for the step counter: charge every call its entry and all its successor scans at
@@ -26,10 +27,7 @@ def Graph.evCost (G : Graph n) : Ev n → Nat
 
 def Graph.cost (G : Graph n) (tr : List (Ev n)) : Nat := (tr.map G.evCost).sum
 
-/-- the step stamp of an observable event (start, output, term) -/
-def Ev.obs : Ev n → Option Nat
-  | .start s | .output s _ | .term s => some s
-  | _ => none
+-- `Ev.obs`, the step stamp of an observable event (start, output, term), is defined in Bsdfs/Positions.lean
 
 /-- scans still owed by the frames open at an observable event: at most the out-degrees of the spine less t -/
 def Graph.owed (G : Graph n) : Ev n → Nat

@@ -51,7 +51,7 @@ lake env ../lean4export/.lake/build/bin/lean4export Bsdfs > .lake/bsdfs.ndjson  
 ../con-leche/.lake/build/bin/con-leche .lake/bsdfs.ndjson
 ```
 
-Expected output: `... con-leche: accepted 62054 declarations (--verified)`.
+Expected output: `... con-leche: accepted 62056 declarations (--verified)`.
 
 This re-checks every proof with a type checker that shares no code with Lean's kernel, and con-leche admits
 no axioms besides `propext`, `Quot.sound` and `Classical.choice` and fails on any use of `sorry`, so it confirms the axiom checks of `lake build` for the whole export.
@@ -66,7 +66,7 @@ of the lean type checker kernel. After the export, check with:
 ../nanoda_lib/target/release/nanoda_bin nanoda_config
 ```
 
-Expected output: `... Checked 63629 declarations with no errors, skipping exported but unpermitted axioms ["Lean.ofReduceNat", "sorryAx", "Lean.ofReduceBool"]`.
+Expected output: `... Checked 63631 declarations with no errors, skipping exported but unpermitted axioms ["Lean.ofReduceNat", "sorryAx", "Lean.ofReduceBool"]`.
 The skipped axioms are declared by Lean's Init but unused, and any proof using them
 would fail. `Lean.trustCompiler : True` is allowed because `Init` needs it.
 
@@ -87,7 +87,7 @@ Expect breaking changes with newer versions of lean.
 
 # The Current State (by Claude)
 
-- **Verified:** the four theorems `bsdfs_sound`, `bsdfs_complete_once`, `bsdfs_worst_case_delay` and `bsdfs_amortized_delay`, and the lower bounds: `gate_interval1` (the interval (o_1, o_2] of Γ_c, exactly), `worst_case_ratio`, `amortized_ratio` and `clique_amortized_lower`. They have no `sorry` and use only the standard axioms. The Lean kernel checks the final proof terms, so `mvcgen` being deprecated doesn't affect trust. What you have to read and trust is `Bsdfs/Challenge.lean`, which states all main theorems with `sorry`, and its two imports, which contain definitions only: the ~150 lines of `BsdfsExec.lean` (`Graph`, `bsdfs`, `outputs`, `obsSteps`, `BoundedPath`, `Graph.m`) and, for the lower bounds, `Traps.lean` (the graphs Γ_c and G_c and the counts `sweepCalls` and `gateD1`). `Bsdfs/MainTheorems.lean` proves the same statements under the same names, each with its axiom check, and `comparator.json` lets the comparator tool check that they match. CI builds the project, replays these theorems through the kernel with `leanchecker --fresh`, checks with `CheckChallenge.lean` that `Challenge.lean` and `MainTheorems.lean` state the same theorems on the same definitions, and runs the smoke test.
+- **Verified:** the four theorems `bsdfs_sound`, `bsdfs_complete_once`, `bsdfs_worst_case_delay` and `bsdfs_amortized_delay`, and the lower bounds: `gate_interval1` (the interval (o_1, o_2] of Γ_c, exactly), `worst_case_ratio`, `amortized_ratio` and `clique_amortized_lower`, and the per-interval corollaries `bsdfs_two_entries` (Two Entries per Pair) and `bsdfs_edge_scans` (Edge Scans; it counts the calls and dequeues that scan an edge, since the trace records no scans, so that these bound the scans is the paper's argument). They have no `sorry` and use only the standard axioms. The Lean kernel checks the final proof terms, so `mvcgen` being deprecated doesn't affect trust. What you have to read and trust is `Bsdfs/Challenge.lean`, which states all main theorems with `sorry`, and its three imports, which contain definitions only: the ~150 lines of `BsdfsExec.lean` (`Graph`, `bsdfs`, `outputs`, `obsSteps`, `BoundedPath`, `Graph.m`), for the per-interval corollaries `Positions.lean` (`Consec`, `Trace.cnt`, `Trace.enterAt`, `Trace.deqAt`, `Trace.stk`, `Trace.depthOf`) and, for the lower bounds, `Traps.lean` (the graphs Γ_c and G_c and the counts `sweepCalls` and `gateD1`). `Bsdfs/MainTheorems.lean` proves the same statements under the same names, each with its axiom check, and `comparator.json` lets the comparator tool check that they match. CI builds the project, replays these theorems through the kernel with `leanchecker --fresh`, checks with `CheckChallenge.lean` that `Challenge.lean` and `MainTheorems.lean` state the same theorems on the same definitions, and runs the smoke test.
 - **Path mode only:** all theorems assume s ≠ t. Cycle mode (s = t) is in the paper's title and in the smoke test (200 instances), but no theorem covers it yet.
 - **The verified object is the Lean transcription:** its agreement with `bsdfs_traced.py`, the paper's pseudocode and the C code is tested on the 1203 smoke instances, not proved.
 - **The delay bounds count the step counter:** that is the paper's cost model, with stack membership as an O(1) step. The Lean executable actually checks membership by a linear scan, so the theorems say nothing about the Lean program's own running time.

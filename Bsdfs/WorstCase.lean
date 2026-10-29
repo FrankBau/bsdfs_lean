@@ -61,11 +61,11 @@ theorem bsdfs_worst_case_delay (hG : G.WF) (hst : s ≠ t) (hk : 0 < k) : ∀ x 
 /-- Two Entries per Pair (cor:two-entries): between consecutive observable events a < c, every node z is entered at most twice
     at the same depth h, at most once in the descent and once in the ascent (One Entry per Pair per Phase) -/
 theorem RunFacts.two_entries {G : Graph n} {s t : Fin n} {k : Nat} {tr : List (Ev n)} (hR : RunFacts G s t k tr) {a c : Nat} (hC : Consec tr a c) (z : Fin n) (h : Nat) :
-    cnt (fun q => enterAt tr z q = true ∧ DelayFacts.depthOf tr q = h) a c ≤ 2 := by
+    cnt (fun q => enterAt tr z q = true ∧ depthOf tr q = h) a c ≤ 2 := by
   obtain ⟨m, β, hS⟩ := shape_exists hC
   have hI := hR.intervalFacts hC hS
   -- two such entries in the same phase are one
-  have one : ∀ q₁ q₂, enterAt tr z q₁ = true ∧ DelayFacts.depthOf tr q₁ = h → enterAt tr z q₂ = true ∧ DelayFacts.depthOf tr q₂ = h →
+  have one : ∀ q₁ q₂, enterAt tr z q₁ = true ∧ depthOf tr q₁ = h → enterAt tr z q₂ = true ∧ depthOf tr q₂ = h →
       ((a < q₁ ∧ q₁ ≤ β ∧ a < q₂ ∧ q₂ ≤ β) ∨ (β < q₁ ∧ q₁ ≤ c ∧ β < q₂ ∧ q₂ ≤ c)) → q₁ = q₂ := by
     intro q₁ q₂ ⟨e₁, d₁⟩ ⟨e₂, d₂⟩ hph
     obtain ⟨σ₁, h₁, he₁⟩ := Trace.enterAt_iff.mp e₁
@@ -75,14 +75,14 @@ theorem RunFacts.two_entries {G : Graph n} {s t : Fin n} {k : Nat} {tr : List (E
     rw [d₁] at he₁
     rw [d₂] at he₂
     exact Decidable.byContradiction fun hne => hI.one_entry q₁ q₂ σ₁ σ₂ z h hne hph he₁ he₂
-  have hd := Trace.cnt_le_one (fun q => enterAt tr z q = true ∧ DelayFacts.depthOf tr q = h) (lo := a) (hi := β) fun q₁ q₂ a1 b1 a2 b2 p1 p2 => one q₁ q₂ p1 p2 (Or.inl ⟨a1, b1, a2, b2⟩)
-  have ha := Trace.cnt_le_one (fun q => enterAt tr z q = true ∧ DelayFacts.depthOf tr q = h) (lo := β) (hi := c) fun q₁ q₂ a1 b1 a2 b2 p1 p2 => one q₁ q₂ p1 p2 (Or.inr ⟨a1, b1, a2, b2⟩)
+  have hd := Trace.cnt_le_one (fun q => enterAt tr z q = true ∧ depthOf tr q = h) (lo := a) (hi := β) fun q₁ q₂ a1 b1 a2 b2 p1 p2 => one q₁ q₂ p1 p2 (Or.inl ⟨a1, b1, a2, b2⟩)
+  have ha := Trace.cnt_le_one (fun q => enterAt tr z q = true ∧ depthOf tr q = h) (lo := β) (hi := c) fun q₁ q₂ a1 b1 a2 b2 p1 p2 => one q₁ q₂ p1 p2 (Or.inr ⟨a1, b1, a2, b2⟩)
   rw [Trace.cnt_split _ hS.le (Nat.le_of_lt hS.lt)]
   omega
 
 /-- Two Entries per Pair (cor:two-entries) for the run of `bsdfs` -/
 theorem bsdfs_two_entries (hG : G.WF) (hst : s ≠ t) {a c : Nat} (hC : Consec (bsdfs G s t k) a c) (z : Fin n) (h : Nat) :
-    cnt (fun q => enterAt (bsdfs G s t k) z q = true ∧ DelayFacts.depthOf (bsdfs G s t k) q = h) a c ≤ 2 :=
+    cnt (fun q => enterAt (bsdfs G s t k) z q = true ∧ depthOf (bsdfs G s t k) q = h) a c ≤ 2 :=
   (bsdfs_runFacts G s t k hG hst).two_entries hC z h
 
 /-- Edge Scans (proposed corollary of Interval Budget): in every interval (a, c], every edge (x, y) is scanned at most 2k times,

@@ -6,6 +6,8 @@
     "BSDFS.completeness",
     "BSDFS.worst_case_delay",
     "BSDFS.amortized_delay",
+    "BSDFS.two_entries",
+    "BSDFS.edge_scans",
     "BSDFS.gate_valid",
     "BSDFS.gate_n_plus_m",
     "BSDFS.sweepCalls_formula",
