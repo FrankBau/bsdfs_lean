@@ -111,6 +111,7 @@ Most results of the paper are in the code under a short Lean name; the paper's n
 | Drop Depth | `drop_depth` (DelayFacts) |
 | Descent Split (called Depth Split in changes_v3.md) | `descent_split` (DelayFacts) |
 | Interval Budget (per node, per edge) | `node_budget`, `edge_budget`, with parts (i) and (ii) as `obs_i` and `obs_ii` (DelayFacts) |
+| Edge Scans (proposed corollary of Interval Budget) | `bsdfs_edge_scans` (WorstCase): the edge clause for the run |
 | Worst-Case Delay | `bsdfs_worst_case_delay` (WorstCase), via `interval_bound` (DelaySum) |
 | Period Split | `period_split` (Amortized) |
 | Period Budget (per node, per edge) | `node_period`, `edge_period` (Amortized) |

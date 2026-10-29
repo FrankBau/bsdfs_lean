@@ -84,3 +84,14 @@ theorem RunFacts.two_entries {G : Graph n} {s t : Fin n} {k : Nat} {tr : List (E
 theorem bsdfs_two_entries (hG : G.WF) (hst : s ≠ t) {a c : Nat} (hC : Consec (bsdfs G s t k) a c) (z : Fin n) (h : Nat) :
     cnt (fun q => enterAt (bsdfs G s t k) z q = true ∧ DelayFacts.depthOf (bsdfs G s t k) q = h) a c ≤ 2 :=
   (bsdfs_runFacts G s t k hG hst).two_entries hC z h
+
+/-- Edge Scans (proposed corollary of Interval Budget): in every interval (a, c], every edge (x, y) is scanned at most 2k times,
+    forward by calls at x and backward by dequeues of y.  The trace has no scan events, so the statement counts what does the
+    scanning: the calls at x entered in the interval, the spine frame of x if it is open at a, and the dequeues of y; this is
+    `edge_budget` for the run.  That these bound the scans executed in the interval is the paper's argument, not checked here:
+    a call scans (x, y) at most once over its lifetime, at most one call at x is open at a, and every cascade runs to completion
+    inside the descent. -/
+theorem bsdfs_edge_scans (hG : G.WF) (hst : s ≠ t) (hk : 0 < k) {a c : Nat} (hC : Consec (bsdfs G s t k) a c) {x y : Fin n} (hxy : y ∈ G.succ x) :
+    cnt (fun q => enterAt (bsdfs G s t k) x q = true) a c + cnt (fun q => deqAt (bsdfs G s t k) y q = true) a c + (if x ∈ stk (bsdfs G s t k) a then 1 else 0) ≤ 2 * k := by
+  obtain ⟨m, β, hS⟩ := shape_exists hC
+  exact (bsdfs_runFacts G s t k hG hst).toDelayFacts.edge_budget hC hS hk hxy
