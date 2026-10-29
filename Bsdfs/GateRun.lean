@@ -5,7 +5,7 @@ import Bsdfs.Sweep
 
 /-!
   Lower bounds, part 2: the run of BS-DFS on a gate trap (gate_family.tex) up to its second output, with exact step counts, for
-  any graph with the successor and predecessor lists of Γ_c (`GateCtx`); the concrete graph Γ_c is in Bsdfs/Gate.lean.
+  any graph with the successor and predecessor lists of Γ_c (`GateCtx`); the concrete graph Γ_c is defined in Bsdfs/Traps.lean and shown to be one in Bsdfs/Gate.lean.
   Phases between the outputs s q t and s g q t: (a) search(g) at depth 2 sweeps the block from B_0 with bound k - 3; (b) q scans
   the block: B_0 sweeps it once more with bound 1, the other block nodes are leaves; (c) the cascade fruitful(q, 1) re-arms g and
   the block (one drop each); (d) s scans g, search(g) at depth 1 sweeps the block from B_0 with bound k - 5, then reaches q and t.
@@ -1105,8 +1105,7 @@ theorem gate_g1 (ctx : GateCtx G s q t g blk) (k : Nat) (hk : 6 ≤ k) (S0 : Arr
 
 /-! ### The root call and the run -/
 
-/-- o_2 - o_1 on a gate trap with block size c: two sweeps of the block, re-armed by the cascade in between -/
-def gateD1 (c k : Nat) : Nat := (c + 1) * (sweepCalls c (k - 3) 0 + sweepCalls c (k - 5) 0) + 3 * c * c + 4 * c + 21
+-- `gateD1 c k` = o_2 - o_1 on a gate trap with block size c is defined in Bsdfs/Traps.lean
 
 theorem ObsPre.congr {T0 T : List (Ev n)} {os os' : List Nat} (h : ObsPre T0 os T) (heq : os = os') : ObsPre T0 os' T := heq ▸ h
 

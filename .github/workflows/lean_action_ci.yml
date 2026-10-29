@@ -16,3 +16,17 @@ jobs:
           # replay the whole environment of the main theorems through the kernel, from scratch
           leanchecker: "true"
           leanchecker-args: "--fresh Bsdfs.MainTheorems"
+      # the main statements with sorry, on definitions only; not part of the default build
+      - name: Build the challenge
+        run: lake build Bsdfs.Challenge
+      # the statement check of comparator.json: Challenge and MainTheorems state the same theorems on the same definitions
+      - name: Check the challenge against the main theorems
+        run: lake env lean --run CheckChallenge.lean
+      # the Lean executable produces the same traces as the Python reference implementation
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Smoke test
+        run: |
+          pip install networkx
+          ./smoke_test.sh

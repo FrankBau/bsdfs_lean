@@ -4,6 +4,7 @@ Copyright (c) 2026 Frank Bauernöppel. Released under the MIT license as describ
 -- This module serves as the root of the `Bsdfs` library.
 -- Import modules here that should be built as part of the library.
 import Bsdfs.BsdfsExec
+import Bsdfs.Traps
 import Bsdfs.Basic
 import Bsdfs.Sound
 import Bsdfs.Complete

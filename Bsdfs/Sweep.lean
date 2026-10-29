@@ -2,6 +2,7 @@
 Copyright (c) 2026 Frank Bauernöppel. Released under the MIT license as described in the file LICENSE.
 -/
 import Bsdfs.Basic
+import Bsdfs.Traps
 
 /-!
   Lower bounds, part 1: specs of `search` that compute exact step counts.  Generic facts (the trace only grows; a call whose
@@ -205,8 +206,7 @@ structure SweepCtx (G : Graph n) (t : Fin n) (k : Nat) (blk X P : List (Fin n)) 
   P_len : P.length = h0
   bound : β + h0 + L = k
 
-/-- the calls of a sweep from the first call at relative depth h: 1 + Σ_{d = h+1}^{min(L, c-1)} (c - d) -/
-def sweepCalls (c L h : Nat) : Nat := 1 + ((List.range' (h + 1) (min L (c - 1) - h)).map (fun d => c - d)).sum
+-- `sweepCalls c L h`, the calls of a sweep from the first call at relative depth h, is defined in Bsdfs/Traps.lean
 
 theorem sweepCalls_last (c L : Nat) : sweepCalls c L (min L (c - 1)) = 1 := by simp [sweepCalls]
 

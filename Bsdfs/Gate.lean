@@ -19,25 +19,7 @@ set_option mvcgen.warning false
 section graph
 variable (c : Nat)
 
-def gS : Fin (c + 4) := ⟨0, by omega⟩
-def gQ : Fin (c + 4) := ⟨1, by omega⟩
-def gT : Fin (c + 4) := ⟨2, by omega⟩
-def gG : Fin (c + 4) := ⟨3, by omega⟩
-
-/-- the block B_0 .. B_{c-1}: nodes 4 .. c + 3 -/
-def gBlk : List (Fin (c + 4)) := (List.finRange c).map (fun i => i.addNat 4)
-
-def gateSucc (v : Fin (c + 4)) : List (Fin (c + 4)) :=
-  if v.val = 0 then [gQ c, gG c]
-  else if v.val = 1 then gT c :: gG c :: gBlk c
-  else if v.val = 2 then []
-  else if v.val = 3 then (gBlk c).take 1 ++ [gQ c, gS c]
-  else (gBlk c).filter (· ≠ v) ++ [gG c]
-
-def gatePred (v : Fin (c + 4)) : List (Fin (c + 4)) := (List.finRange (c + 4)).filter (fun u => v ∈ gateSucc c u)
-
-/-- the gate trap Γ_c -/
-def gate : Graph (c + 4) := ⟨gateSucc c, gatePred c⟩
+-- `gS`, `gQ`, `gT`, `gG`, `gBlk`, `gateSucc`, `gatePred` and `gate` are defined in Bsdfs/Traps.lean
 
 theorem gBlk_length : (gBlk c).length = c := by simp [gBlk]
 

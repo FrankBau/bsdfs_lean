@@ -8,11 +8,9 @@ import Bsdfs.Tightness
   The `#guard_msgs` checks make `lake build` fail if one of them depends on an axiom other than `propext`, `Classical.choice` and
   `Quot.sound` (in particular on `sorryAx`).
 
-  To trust these theorems, read their statements here and the definitions they use:
-  - `Bsdfs/BsdfsExec.lean`: `Graph`, `Graph.WF`, `Graph.m`, `bsdfs` (with `search`, `fruitful` and the step counter),
-    `outputs`, `obsSteps`, `Graph.BoundedPath`;
-  - for the lower bounds also the example graphs, `gate`, `gS`, `gT` in `Bsdfs/Gate.lean` and `clique`, `cS`, `cT` in
-    `Bsdfs/Clique.lean`, and the counts `sweepCalls` in `Bsdfs/Sweep.lean` and `gateD1` in `Bsdfs/GateRun.lean`.
+  To trust these theorems, read `Bsdfs/Challenge.lean`, which states them with the same names and `sorry`, and the definitions
+  it uses, in `Bsdfs/BsdfsExec.lean` and `Bsdfs/Traps.lean`; `comparator.json` lets the comparator tool check that the
+  statements here and there match.
 
   Everything else in the library is proof, checked by Lean.
 -/

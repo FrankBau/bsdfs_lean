@@ -1,0 +1,25 @@
+{
+  "challenge_module": "Bsdfs.Challenge",
+  "solution_module": "Bsdfs.MainTheorems",
+  "theorem_names": [
+    "BSDFS.soundness",
+    "BSDFS.completeness",
+    "BSDFS.worst_case_delay",
+    "BSDFS.amortized_delay",
+    "BSDFS.gate_valid",
+    "BSDFS.gate_n_plus_m",
+    "BSDFS.sweepCalls_formula",
+    "BSDFS.gate_first_events",
+    "BSDFS.worst_case_lower",
+    "BSDFS.worst_case_tight",
+    "BSDFS.amortized_lower",
+    "BSDFS.amortized_tight",
+    "BSDFS.clique_valid",
+    "BSDFS.clique_n_plus_m",
+    "BSDFS.clique_events",
+    "BSDFS.clique_lower_bound"
+  ],
+  "definition_names": [],
+  "permitted_axioms": ["propext", "Classical.choice", "Quot.sound"],
+  "enable_nanoda": true
+}

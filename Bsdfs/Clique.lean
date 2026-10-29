@@ -15,19 +15,7 @@ set_option mvcgen.warning false
 section clique
 variable (c : Nat)
 
-/-- the block: nodes 0 .. c - 1 -/
-def cBlk : List (Fin (c + 1)) := (List.finRange c).map Fin.castSucc
-
-/-- successors in scan order: the other block nodes in index order; t = c has none -/
-def cliqueSucc (v : Fin (c + 1)) : List (Fin (c + 1)) := if v.val < c then (cBlk c).filter (· ≠ v) else []
-
-def cliquePred (v : Fin (c + 1)) : List (Fin (c + 1)) := (List.finRange (c + 1)).filter (fun u => v ∈ cliqueSucc c u)
-
-/-- the clique trap G_c: the complete digraph on c nodes and an isolated target -/
-def clique : Graph (c + 1) := ⟨cliqueSucc c, cliquePred c⟩
-
-def cS : Fin (c + 1) := ⟨0, by omega⟩
-def cT : Fin (c + 1) := ⟨c, by omega⟩
+-- `cBlk`, `cliqueSucc`, `cliquePred`, `clique`, `cS` and `cT` are defined in Bsdfs/Traps.lean
 
 theorem cBlk_length : (cBlk c).length = c := by simp [cBlk]
 
