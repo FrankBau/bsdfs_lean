@@ -23,7 +23,7 @@ jobs:
       - name: Check the challenge against the main theorems
         run: lake env lean --run CheckChallenge.lean
       # the Lean executable produces the same traces as the Python reference implementation
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Smoke test
