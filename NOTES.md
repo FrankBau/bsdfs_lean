@@ -107,6 +107,7 @@ Most results of the paper are in the code under a short Lean name; the paper's n
 | Cascade Witness Path | field `witness` of `RunFacts` |
 | Descent Seal | `seal_enter`, built on `seal_core` (Phases) |
 | One Entry per Pair per Phase | `one_entry'` (Phases) |
+| Two Entries per Pair | `bsdfs_two_entries` (WorstCase), via `RunFacts.two_entries`; not used by the delay proofs |
 | Drop Depth | `drop_depth` (DelayFacts) |
 | Descent Split (called Depth Split in changes_v3.md) | `descent_split` (DelayFacts) |
 | Interval Budget (per node, per edge) | `node_budget`, `edge_budget`, with parts (i) and (ii) as `obs_i` and `obs_ii` (DelayFacts) |
@@ -120,7 +121,7 @@ Most results of the paper are in the code under a short Lean name; the paper's n
 | Tightness of the delay bounds | `gate_worst_case_lower`, `worst_case_ratio`, `gate_amortized_lower`, `amortized_ratio` (Tightness) |
 
 Paper results with no Lean counterpart:
-- Two Entries per Pair, Entry Bound: replaced by the v3 budgets per node and per edge (Interval Budget, Period Budget).
+- Entry Bound: replaced by the v3 budgets per node and per edge (Interval Budget, Period Budget).
 - Triangle Inequality, Cascade Distance: distances are walks (`WalkLE`), not numbers, and the cascade gives Update Repairs without exact distances.
 - Barrier non-negative, Barrier Upper Bound, Raise Bound, Drop Bound, Fruitful Writes Never Lower: clauses of `SearchPost`, or fields `raise`, `drop`, `fruitful` of `RunFacts` and `DelayFacts`, proved from the program. Boundary Intervals: covered by the general interval bound. Termination: `termination_by` of `search`.
 - Drop Count: probably `U_le` (DelayFacts); this correspondence is not checked.

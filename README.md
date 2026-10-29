@@ -1,7 +1,7 @@
 # Lean Package
 
-Lean4 code for the Bounded-Scope Depth-First Search (BS-DFS) path enumeration algorithm
-in graphs, with proofs of its main properties and theorems:
+Lean4 code for the [Bounded-Scope Depth-First Search (BS-DFS)](https://github.com/FrankBau/bsdfs)
+path enumeration algorithm in directed graphs, with proofs of its main properties and theorems:
 
 - **soundness**: every output is a simple s-t path with at most k edges,
 - **completeness**: every such path is output exactly once,
@@ -11,6 +11,9 @@ in graphs, with proofs of its main properties and theorems:
 - **lower bounds**: the gate traps Γ_c show that both delay bounds are tight up to lower-order terms:
   no factor below 2 works in 2k(n+m), none below 1 in τ(k+2)(n+m); on the clique traps G_c the
   first observable event after the start takes at least (k−1)(n+m) steps.
+
+A **step** is a node visit, the output of one node of a path, or the scan of a single adjacency-list
+entry. Each step can be executed in O(1) time.
 
 Check for yourself that all claims hold, in the repository root:
 
