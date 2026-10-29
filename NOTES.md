@@ -108,6 +108,7 @@ Most results of the paper are in the code under a short Lean name; the paper's n
 | Descent Seal | `seal_enter`, built on `seal_core` (Phases) |
 | One Entry per Pair per Phase | `one_entry'` (Phases) |
 | Two Entries per Pair | `bsdfs_two_entries` (WorstCase), via `RunFacts.two_entries`; not used by the delay proofs |
+| Two Visits per Pair (new, not in the paper): a visit is an entry or a dequeue, at the depth of the search right after it | `bsdfs_two_visits` (TwoVisits), via `AmortFacts.two_visits`; not used by the delay proofs |
 | Drop Depth | `drop_depth` (DelayFacts) |
 | Descent Split (called Depth Split in changes_v3.md) | `descent_split` (DelayFacts) |
 | Interval Budget (per node, per edge) | `node_budget`, `edge_budget`, with parts (i) and (ii) as `obs_i` and `obs_ii` (DelayFacts) |
