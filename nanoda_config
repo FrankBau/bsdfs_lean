@@ -1,0 +1,28 @@
+{
+    "export_file_path": ".lake/bsdfs.ndjson",
+    "use_stdin": false,
+    "permitted_axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound",
+        "Lean.trustCompiler"
+    ],
+    "unpermitted_axiom_hard_error": false,
+    "nat_extension": true,
+    "string_extension": true,
+    "pp_declars": [
+        "BSDFS.soundness",
+        "BSDFS.completeness",
+        "BSDFS.worst_case_delay",
+        "BSDFS.amortized_delay"
+    ],
+    "pp_to_stdout": true,
+    "pp_options": {
+        "explicit": false,
+        "proofs": false,
+        "indent": 2,
+        "width": 100,
+        "declar_sep": "\n\n"
+    },
+    "print_success_message": true
+}
